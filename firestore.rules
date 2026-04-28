@@ -1,0 +1,172 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function userEmail() {
+      return isSignedIn() && request.auth.token.email != null
+        ? request.auth.token.email
+        : '';
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        userEmail() in [
+          'thaixalem367@gmail.com',
+          'nguyenxuanthai1609@gmail.com'
+        ]
+      );
+    }
+
+    function isValidId(id) {
+      return id is string
+        && id.size() > 0
+        && id.size() <= 128
+        && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function hasValidString(data, field, maxSize) {
+      return data.keys().hasAll([field])
+        && data[field] is string
+        && data[field].size() > 0
+        && data[field].size() <= maxSize;
+    }
+
+    function isValidImages(data) {
+      return !data.keys().hasAny(['images']) ||
+        (
+          data.images is list &&
+          data.images.size() <= 30
+        );
+    }
+
+    function isValidProduct(data) {
+      return data.keys().hasAll([
+          'slug',
+          'title',
+          'category',
+          'categorySlug',
+          'image',
+          'price',
+          'ownerId'
+        ])
+        && data.keys().size() >= 7
+        && data.keys().size() <= 15
+
+        && hasValidString(data, 'slug', 100)
+        && hasValidString(data, 'title', 200)
+        && hasValidString(data, 'category', 100)
+        && hasValidString(data, 'categorySlug', 100)
+        && hasValidString(data, 'image', 500000)
+        && hasValidString(data, 'price', 100)
+
+        && data.ownerId is string
+        && data.ownerId.size() > 0
+        && (
+          data.ownerId == request.auth.uid ||
+          isAdmin()
+        )
+
+        && (
+          !data.keys().hasAny(['description']) ||
+          (
+            data.description is string &&
+            data.description.size() <= 3000
+          )
+        )
+
+        && isValidImages(data);
+    }
+
+    function isProductOwner() {
+      return isSignedIn()
+        && existing().ownerId is string
+        && existing().ownerId == request.auth.uid;
+    }
+
+    function isValidCategory(data) {
+      return data.keys().hasAll([
+          'slug',
+          'title'
+        ])
+        && data.keys().size() >= 2
+        && data.keys().size() <= 8
+        && hasValidString(data, 'slug', 100)
+        && hasValidString(data, 'title', 150)
+        && (
+          !data.keys().hasAny(['description']) ||
+          (
+            data.description is string &&
+            data.description.size() <= 1000
+          )
+        )
+        && (
+          !data.keys().hasAny(['image']) ||
+          (
+            data.image is string &&
+            data.image.size() <= 500000
+          )
+        );
+    }
+
+    match /products/{productId} {
+      allow read: if true;
+
+      allow create: if isSignedIn()
+        && isValidId(productId)
+        && isValidProduct(incoming());
+
+      allow update: if isSignedIn()
+        && (
+          isAdmin() ||
+          (
+            isProductOwner()
+            && incoming().ownerId == existing().ownerId
+            && isValidProduct(incoming())
+          )
+        );
+
+      allow delete: if isSignedIn()
+        && isAdmin();
+    }
+
+    match /categories/{categoryId} {
+      allow read: if true;
+
+      allow create: if isSignedIn()
+        && isValidId(categoryId)
+        && isValidCategory(incoming());
+
+      allow update: if isSignedIn()
+        && (
+          isAdmin() ||
+          isValidCategory(incoming())
+        );
+
+      allow delete: if isSignedIn()
+        && isAdmin();
+    }
+
+    match /admins/{adminId} {
+      allow read: if isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

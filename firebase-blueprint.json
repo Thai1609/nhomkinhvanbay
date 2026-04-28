@@ -1,0 +1,58 @@
+{
+  "entities": {
+    "Product": {
+      "title": "Product",
+      "description": "A glass and aluminum product",
+      "type": "object",
+      "properties": {
+        "slug": { "type": "string" },
+        "title": { "type": "string" },
+        "category": { "type": "string" },
+        "categorySlug": { "type": "string" },
+        "image": { "type": "string" },
+        "images": { "type": "array", "items": { "type": "string" } },
+        "price": { "type": "string" },
+        "description": { "type": "string" },
+        "ownerId": { "type": "string" }
+      },
+      "required": ["slug", "title", "category", "categorySlug", "image", "price", "ownerId"]
+    },
+    "Category": {
+      "title": "Category",
+      "description": "Product category",
+      "type": "object",
+      "properties": {
+        "slug": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "image": { "type": "string" },
+        "ownerId": { "type": "string" }
+      },
+      "required": ["slug", "title", "description", "image", "ownerId"]
+    },
+    "Admin": {
+      "title": "Admin",
+      "description": "Administrator user",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" }
+      },
+      "required": ["uid", "email"]
+    }
+  },
+  "firestore": {
+    "/products/{productId}": {
+      "schema": "Product",
+      "description": "Collection of products"
+    },
+    "/categories/{categoryId}": {
+      "schema": "Category",
+      "description": "Collection of categories"
+    },
+    "/admins/{adminId}": {
+      "schema": "Admin",
+      "description": "Collection of administrator users"
+    }
+  }
+}
