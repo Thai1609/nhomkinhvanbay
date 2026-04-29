@@ -34,7 +34,7 @@ export default function Products() {
   const displayCategories = dynamicCategories.length > 0 ? dynamicCategories : CATEGORIES;
 
   return (
-    <section id="products" className="py-16 bg-white">
+    <section id="products" className="py-16 bg-white scroll-mt-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
           <div>

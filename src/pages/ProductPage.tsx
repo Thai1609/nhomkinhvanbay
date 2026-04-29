@@ -149,14 +149,7 @@ export default function ProductPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-4 mb-8">
-               <div className="flex items-center gap-2">
-                  <Clock size={20} className="text-blue-500" />
-                  <span className="text-xs font-medium text-gray-700">Lắp đặt 24/7</span>
-               </div>
-               <div className="flex items-center gap-2">
-                  <Truck size={20} className="text-orange-500" />
-                  <span className="text-xs font-medium text-gray-700">Vận chuyển miễn phí</span>
-               </div>
+               
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4">
