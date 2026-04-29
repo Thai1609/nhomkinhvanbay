@@ -1,4 +1,4 @@
-import { ChangeEvent, useState, useEffect } from "react";
+import { ChangeEvent, useState, useEffect, useMemo } from "react";
 import { auth, db } from "../lib/firebase";
 import {
   GoogleAuthProvider,
@@ -20,7 +20,6 @@ import {
   deleteCategory,
 } from "../services/productService";
 import { Product, Category } from "../types";
-import { PRODUCTS, CATEGORIES } from "../constants/data";
 import { motion } from "motion/react";
 import {
   Plus,
@@ -56,7 +55,7 @@ export const generateSlug = (text: string) => {
 };
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<"products" | "categories">(
+  const [activeTab, setActiveTab] = useState<"products" | "categories" | "pricing">(
     "products",
   );
   const [user, setUser] = useState<User | null>(null);
@@ -65,6 +64,8 @@ export default function AdminPage() {
     [],
   );
   const [loading, setLoading] = useState(true);
+  const [priceDrafts, setPriceDrafts] = useState<Record<string, string>>({});
+  const [savingPriceId, setSavingPriceId] = useState<string | null>(null);
   const [editingProduct, setEditingProduct] = useState<
     (Product & { id: string }) | null
   >(null);
@@ -165,6 +166,28 @@ export default function AdminPage() {
     return () => unsubscribe();
   }, []);
 
+  useEffect(() => {
+    setPriceDrafts(
+      products.reduce<Record<string, string>>((drafts, product) => {
+        drafts[product.id] = product.price || "";
+        return drafts;
+      }, {}),
+    );
+  }, [products]);
+
+  const productsByCategory = useMemo(
+    () =>
+      categories
+        .map((category) => ({
+          category,
+          products: products.filter(
+            (product) => product.categorySlug === category.slug,
+          ),
+        }))
+        .filter(({ products }) => products.length > 0),
+    [categories, products],
+  );
+
   const fetchCategoriesData = async () => {
     const data = await getCategories();
     setCategories(data);
@@ -175,6 +198,40 @@ export default function AdminPage() {
     const data = await getProducts();
     setProducts(data);
     setLoading(false);
+  };
+
+  const handlePriceChange = (productId: string, price: string) => {
+    setPriceDrafts((prev) => ({
+      ...prev,
+      [productId]: price,
+    }));
+  };
+
+  const handlePriceSave = async (product: Product & { id: string }) => {
+    if (!user) {
+      alert("Bạn chưa đăng nhập. Vui lòng tải lại trang và đăng nhập.");
+      return;
+    }
+
+    const nextPrice = (priceDrafts[product.id] || "").trim();
+    if (!nextPrice) {
+      alert("Vui lòng nhập giá báo giá.");
+      return;
+    }
+
+    try {
+      setSavingPriceId(product.id);
+      await updateProduct(product.id, {
+        ...product,
+        price: nextPrice,
+      });
+      await fetchProducts();
+    } catch (error) {
+      console.error("Update price error:", error);
+      alert("Có lỗi xảy ra khi cập nhật báo giá.");
+    } finally {
+      setSavingPriceId(null);
+    }
   };
 
   const handleSignIn = async () => {
@@ -603,6 +660,12 @@ export default function AdminPage() {
           >
             Quản lý Danh mục
           </button>
+          <button
+            onClick={() => setActiveTab("pricing")}
+            className={`px-6 py-3 rounded-xl font-bold text-sm transition-all ${activeTab === "pricing" ? "bg-black text-white shadow-lg shadow-black/20" : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"}`}
+          >
+            Quản lý báo giá
+          </button>
         </div>
 
         {activeTab === "products" && (
@@ -738,21 +801,6 @@ export default function AdminPage() {
                           ))}
                         </select>
                       </div>
-                      <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2.5">
-                          Giá hiển thị
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          value={formData.price}
-                          onChange={(e) =>
-                            setFormData({ ...formData, price: e.target.value })
-                          }
-                          placeholder="Giá: Liên hệ"
-                          className="w-full bg-gray-50 border border-gray-100 rounded-xl px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-sm"
-                        />
-                      </div>
                     </div>
                     <div className="space-y-6">
                       <div>
@@ -878,9 +926,6 @@ export default function AdminPage() {
                         Tên & Danh mục
                       </th>
                       <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">
-                        Giá
-                      </th>
-                      <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">
                         Tạo bởi
                       </th>
                       <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-right">
@@ -910,9 +955,6 @@ export default function AdminPage() {
                           </p>
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-600">
-                          {product.price}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-600">
                           <span className="text-[10px] text-gray-500">
                             {product.createdBy || "N/A"}
                           </span>
@@ -938,7 +980,7 @@ export default function AdminPage() {
                     {products.length === 0 && !loading && (
                       <tr>
                         <td
-                          colSpan={5}
+                          colSpan={4}
                           className="px-6 py-12 text-center text-gray-400 italic"
                         >
                           Chưa có sản phẩm nào được tạo.
@@ -949,6 +991,103 @@ export default function AdminPage() {
                 </table>
               </div>
             </div>
+          </div>
+        )}
+
+        {activeTab === "pricing" && (
+          <div className="space-y-8">
+            <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-6">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">Quản lý báo giá</h2>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Cập nhật giá tham khảo cho từng sản phẩm. Dữ liệu này hiển thị trên trang Báo giá và trang danh mục.
+                  </p>
+                </div>
+                <Link
+                  to="/bao-gia"
+                  className="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-sky-50 text-sky-600 font-bold text-sm hover:bg-sky-100 transition-all"
+                >
+                  Xem trang báo giá
+                </Link>
+              </div>
+            </div>
+
+            {productsByCategory.length > 0 ? (
+              productsByCategory.map(({ category, products }) => (
+                <div
+                  key={category.slug}
+                  className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden"
+                >
+                  <div className="p-6 border-b border-gray-50">
+                    <h3 className="font-bold text-gray-900">{category.title}</h3>
+                    <p className="text-xs text-gray-400 mt-1">{category.slug}</p>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                      <thead>
+                        <tr className="bg-gray-50">
+                          <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                            Hạng mục
+                          </th>
+                          <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                            Giá tham khảo
+                          </th>
+                          <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-right">
+                            Thao tác
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-50">
+                        {products.map((product) => (
+                          <tr
+                            key={product.id}
+                            className="hover:bg-gray-50/50 transition-colors"
+                          >
+                            <td className="px-6 py-4">
+                              <p className="text-sm font-bold text-gray-900">
+                                {product.title}
+                              </p>
+                              <p className="text-[10px] text-gray-400">
+                                {product.slug}
+                              </p>
+                            </td>
+                            <td className="px-6 py-4 min-w-[260px]">
+                              <input
+                                type="text"
+                                value={priceDrafts[product.id] ?? product.price ?? ""}
+                                onChange={(e) =>
+                                  handlePriceChange(product.id, e.target.value)
+                                }
+                                placeholder="VD: 3.000.000 - 3.300.000 đ/m2"
+                                className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition-all shadow-sm"
+                              />
+                            </td>
+                            <td className="px-6 py-4 text-right">
+                              <button
+                                onClick={() => handlePriceSave(product)}
+                                disabled={
+                                  savingPriceId === product.id ||
+                                  (priceDrafts[product.id] ?? product.price ?? "") === product.price
+                                }
+                                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-black text-white font-bold text-sm hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                              >
+                                <Save size={16} />
+                                {savingPriceId === product.id ? "Đang lưu" : "Lưu"}
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="py-12 text-center text-gray-400 bg-white rounded-3xl border border-dashed border-gray-200">
+                <p className="text-sm">Chưa có sản phẩm để quản lý báo giá.</p>
+              </div>
+            )}
           </div>
         )}
 
