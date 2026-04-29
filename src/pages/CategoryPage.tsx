@@ -1,5 +1,4 @@
 import { useParams, Link } from 'react-router-dom';
-import { PRODUCTS, CATEGORIES } from '../constants/data';
 import { motion } from 'motion/react';
 import { ArrowLeft, ChevronRight, Phone } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -8,8 +7,8 @@ import { Product, Category } from '../types';
 
 export default function CategoryPage() {
   const { slug } = useParams();
-  const [dynamicProducts, setDynamicProducts] = useState<Product[]>([]);
-  const [dynamicCategories, setDynamicCategories] = useState<Category[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -20,12 +19,8 @@ export default function CategoryPage() {
           getProducts(),
           getCategories()
         ]);
-        if (productsData && productsData.length > 0) {
-          setDynamicProducts(productsData);
-        }
-        if (categoriesData && categoriesData.length > 0) {
-          setDynamicCategories(categoriesData);
-        }
+        if (productsData) setProducts(productsData);
+        if (categoriesData) setCategories(categoriesData);
       } catch (err) {
         console.error("Error fetching data:", err);
       }
@@ -34,11 +29,8 @@ export default function CategoryPage() {
     fetchData();
   }, []);
 
-  const allProducts = dynamicProducts.length > 0 ? dynamicProducts : PRODUCTS;
-  const filteredProducts = allProducts.filter(p => p.categorySlug === slug);
-
-  const allCategories = dynamicCategories.length > 0 ? dynamicCategories : CATEGORIES;
-  const category = allCategories.find(c => c.slug === slug);
+  const filteredProducts = products.filter(p => p.categorySlug === slug);
+  const category = categories.find(c => c.slug === slug);
 
   useEffect(() => {
     window.scrollTo(0, 0);

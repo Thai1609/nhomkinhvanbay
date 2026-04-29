@@ -1,9 +1,8 @@
 import { useParams, Link } from 'react-router-dom';
-import { PRODUCTS } from '../constants/data';
 import { motion } from 'motion/react';
-import { ArrowLeft, ChevronRight, Phone, MessageCircle, Clock, Truck } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Phone, MessageCircle, Truck } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { getProductBySlug } from '../services/productService';
+import { getProductBySlug, getProducts } from '../services/productService';
 import { Product } from '../types';
 
 export default function ProductPage() {
@@ -14,42 +13,29 @@ export default function ProductPage() {
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   
   useEffect(() => {
-    const fetchDynamic = async () => {
+    const fetchProduct = async () => {
       setLoading(true);
       if (slug) {
-        const dynamic = await getProductBySlug(slug);
-        if (dynamic) {
-          setProduct(dynamic);
-          setActiveImage(dynamic.image);
-        } else {
-          // fallback to static if not found
-          const staticProduct = PRODUCTS.find(p => p.slug === slug);
-          setProduct(staticProduct);
-          setActiveImage(staticProduct?.image);
-        }
+        const foundProduct = await getProductBySlug(slug);
+        setProduct(foundProduct);
+        setActiveImage(foundProduct?.image);
       }
       setLoading(false);
     };
     
-    fetchDynamic();
+    fetchProduct();
   }, [slug]);
 
   useEffect(() => {
     const fetchRelated = async () => {
       if (product?.categorySlug) {
-         try {
-           const { getProducts } = await import('../services/productService');
-           const allProducts = await getProducts();
-           // @ts-ignore
-           let filtered = allProducts.filter(p => p.categorySlug === product.categorySlug && p.slug !== slug);
-           if (filtered.length === 0) {
-             // @ts-ignore
-             filtered = PRODUCTS.filter(p => p.categorySlug === product.categorySlug && p.slug !== slug);
-           }
-           setRelatedProducts(filtered.slice(0, 5));
-         } catch (e) {
-           console.error(e);
-         }
+        try {
+          const allProducts = await getProducts();
+          const filtered = allProducts.filter(p => p.categorySlug === product.categorySlug && p.slug !== slug);
+          setRelatedProducts(filtered.slice(0, 5));
+        } catch (e) {
+          console.error(e);
+        }
       }
     };
     fetchRelated();
@@ -112,20 +98,6 @@ export default function ProductPage() {
                 referrerPolicy="no-referrer"
               />
             </motion.div>
-            
-            {allImages.length > 1 && (
-              <div className="grid grid-cols-4 gap-2">
-                {allImages.map((img, idx) => (
-                  <button 
-                    key={idx}
-                    onClick={() => setActiveImage(img)}
-                    className={`aspect-square rounded-xl overflow-hidden border-2 transition-all ${activeImage === img ? 'border-sky-500' : 'border-transparent opacity-60 hover:opacity-100 shadow-sm'}`}
-                  >
-                    <img src={img} alt={`${product.title} ${idx}`} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
 
           {/* Thông tin sản phẩm */}
@@ -148,10 +120,6 @@ export default function ProductPage() {
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 mb-8">
-               
-            </div>
-
             <div className="flex flex-col sm:flex-row gap-4">
               <a 
                 href="tel:0909568638" 
@@ -172,22 +140,22 @@ export default function ProductPage() {
         </div>
 
         {/* Section Hình ảnh thi công thực tế */}
-        {product.images && product.images.length > 0 && (
+        {allImages && allImages.length > 1 && (
           <div className="mb-20">
             <h2 className="text-xl font-bold text-gray-900 mb-8 border-l-4 border-sky-500 pl-4">Hình ảnh thi công thực tế</h2>
-            <div className="columns-1 md:columns-2 lg:columns-3 gap-4 space-y-4">
-              {product.images.map((img, idx) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {allImages.map((img, idx) => (
                 <motion.div 
                   key={idx}
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  className="break-inside-avoid"
+                  className="relative aspect-square overflow-hidden rounded-2xl border border-gray-100 shadow-sm"
                 >
                   <img 
                     src={img} 
                     alt={`Thi công ${product.title} ${idx}`} 
-                    className="w-full rounded-2xl border border-gray-100 shadow-sm"
+                    className="w-full h-full object-cover"
                     referrerPolicy="no-referrer"
                   />
                 </motion.div>

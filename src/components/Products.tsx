@@ -1,14 +1,13 @@
 import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
-import { PRODUCTS, CATEGORIES } from '../constants/data';
 import { Phone } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { getProducts, getCategories } from '../services/productService';
 import { Product, Category } from '../types';
 
 export default function Products() {
-  const [dynamicProducts, setDynamicProducts] = useState<Product[]>([]);
-  const [dynamicCategories, setDynamicCategories] = useState<Category[]>([]);
+  const [displayProducts, setDisplayProducts] = useState<Product[]>([]);
+  const [displayCategories, setDisplayCategories] = useState<Category[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -17,21 +16,14 @@ export default function Products() {
           getProducts(),
           getCategories()
         ]);
-        if (productsData && productsData.length > 0) {
-          setDynamicProducts(productsData);
-        }
-        if (categoriesData && categoriesData.length > 0) {
-          setDynamicCategories(categoriesData);
-        }
+        if (productsData) setDisplayProducts(productsData);
+        if (categoriesData) setDisplayCategories(categoriesData);
       } catch (err) {
         console.error("Error fetching data:", err);
       }
     };
     fetchData();
   }, []);
-
-  const displayProducts = dynamicProducts.length > 0 ? dynamicProducts : PRODUCTS;
-  const displayCategories = dynamicCategories.length > 0 ? dynamicCategories : CATEGORIES;
 
   return (
     <section id="products" className="py-16 bg-white scroll-mt-20">
