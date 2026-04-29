@@ -5,6 +5,64 @@ import { useEffect, useState } from 'react';
 import { getProducts, getCategories } from '../services/productService';
 import { Product, Category } from '../types';
 
+const normalizePrice = (price?: string) => {
+  if (!price) return 'Liên hệ';
+  return price.replace(/^Giá:\s*/i, '').trim() || 'Liên hệ';
+};
+
+function CategoryPriceTable({
+  category,
+  products,
+}: {
+  category: Category;
+  products: Product[];
+}) {
+  if (products.length === 0) return null;
+
+  return (
+    <section className="mb-14">
+      <div className="mb-6">
+        <p className="text-sky-500 font-bold uppercase tracking-widest text-xs mb-2">Bảng báo giá tham khảo</p>
+        <h2 className="text-2xl font-bold text-gray-900 mb-3">Bảng báo giá {category.title}</h2>
+        <p className="text-gray-500 text-sm leading-relaxed max-w-3xl">
+          Bảng giá sơ bộ theo từng hạng mục trong danh mục {category.title}. Giá thực tế có thể thay đổi theo kích thước,
+          hệ phụ kiện, loại kính và điều kiện thi công tại công trình.
+        </p>
+      </div>
+
+      <div className="overflow-x-auto rounded-2xl border border-gray-200 shadow-sm">
+        <table className="min-w-[720px] w-full border-collapse bg-white text-sm">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="border-b border-r border-gray-200 px-4 py-3 text-left font-bold text-gray-900">Danh mục</th>
+              <th className="border-b border-r border-gray-200 px-4 py-3 text-left font-bold text-gray-900">Phụ kiện</th>
+              <th className="border-b border-r border-gray-200 px-4 py-3 text-left font-bold text-gray-900">Hạng mục</th>
+              <th className="border-b border-gray-200 px-4 py-3 text-left font-bold text-gray-900">Giá tham khảo</th>
+            </tr>
+          </thead>
+          <tbody>
+            {products.map((product, index) => (
+              <tr key={product.slug} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50/60'}>
+                <td className="border-r border-t border-gray-200 px-4 py-3 text-gray-700">{category.title}</td>
+                <td className="border-r border-t border-gray-200 px-4 py-3 text-gray-700">Theo cấu hình</td>
+                <td className="border-r border-t border-gray-200 px-4 py-3 font-medium text-gray-900">{product.title}</td>
+                <td className="border-t border-gray-200 px-4 py-3 font-bold text-sky-600">{normalizePrice(product.price)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="mt-5 space-y-2 text-sm text-gray-500 leading-relaxed">
+        <p>Lưu ý:</p>
+        <p>- Bảng báo giá chỉ mang tính tham khảo, cần đo đạc và khảo sát công trình để lên báo giá chính xác.</p>
+        <p>- Đơn giá có thể thay đổi theo hệ nhôm, phụ kiện, kính cường lực, màu sơn và khối lượng thi công.</p>
+        <p>- Khách hàng thi công số lượng lớn sẽ được tư vấn chính sách giá phù hợp.</p>
+      </div>
+    </section>
+  );
+}
+
 export default function CategoryPage() {
   const { slug } = useParams();
   const [products, setProducts] = useState<Product[]>([]);
@@ -72,6 +130,8 @@ export default function CategoryPage() {
             {category.description}
           </p>
         </div>
+
+        <CategoryPriceTable category={category} products={filteredProducts} />
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
           {filteredProducts.map((product, index) => (

@@ -15,6 +15,7 @@ import FloatingContact from './components/FloatingContact';
 import ProductPage from './pages/ProductPage';
 import CategoryPage from './pages/CategoryPage';
 import AdminPage from './pages/AdminPage';
+import PricingPage from './pages/PricingPage';
 
 function HomePage() {
   const location = useLocation();
@@ -53,6 +54,7 @@ export default function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/san-pham/:slug" element={<ProductPage />} />
             <Route path="/danh-muc/:slug" element={<CategoryPage />} />
+            <Route path="/bao-gia" element={<PricingPage />} />
             <Route path="/admin" element={<AdminPage />} />
           </Routes>
         </main>

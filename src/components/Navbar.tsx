@@ -12,6 +12,7 @@ export default function Navbar() {
     { name: 'Trang chủ', href: isHome ? '#home' : '/' },
     { name: 'Dịch vụ', href: isHome ? '#services' : '/#services' },
     { name: 'Sản phẩm', href: isHome ? '#products' : '/#products' },
+    { name: 'Báo giá', href: '/bao-gia' },
     { name: 'Liên hệ', href: isHome ? '#contact' : '/#contact' },
   ];
 
