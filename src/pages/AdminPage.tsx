@@ -358,6 +358,7 @@ export default function AdminPage() {
     setEditingCategory(category);
     setCategoryFormData(category);
     setIsAddingCategory(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleCategoryDelete = async (id: string) => {
@@ -417,6 +418,7 @@ export default function AdminPage() {
     setEditingProduct(product);
     setFormData(product);
     setIsAdding(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleDelete = async (id: string) => {
@@ -619,6 +621,7 @@ export default function AdminPage() {
                     price: "Giá: Liên hệ",
                     description: "",
                   });
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
                 className="bg-blue-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20"
               >
@@ -627,61 +630,79 @@ export default function AdminPage() {
             </div>
 
             {(isAdding || editingProduct) && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mb-12 bg-white p-8 rounded-3xl shadow-xl border border-gray-100"
-              >
-                <h2 className="text-xl font-bold mb-6">
-                  {editingProduct ? "Chỉnh sửa sản phẩm" : "Thêm sản phẩm mới"}
-                </h2>
-                <form
-                  onSubmit={handleSubmit}
-                  className="grid grid-cols-1 md:grid-cols-2 gap-6"
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  onClick={() => {
+                    setIsAdding(false);
+                    setEditingProduct(null);
+                  }}
+                  className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                />
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  className="relative bg-white w-full max-w-4xl max-h-[90vh] overflow-y-auto p-8 rounded-3xl shadow-2xl border border-gray-100"
                 >
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
-                        Tên sản phẩm
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={formData.title}
-                        onChange={(e) => {
-                          const newTitle = e.target.value;
-                          const titleSlug = generateSlug(newTitle);
-                          const finalSlug = formData.categorySlug
-                            ? `${formData.categorySlug}-${titleSlug}`
-                            : titleSlug;
-                          setFormData({
-                            ...formData,
-                            title: newTitle,
-                            slug: finalSlug,
-                          });
-                        }}
-                        placeholder="VD: Cửa nhôm Xingfa hệ 55"
-                        className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
-                        Slug (Đường dẫn ví dụ: cua-nhom-xingfa)
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={formData.slug}
-                        onChange={(e) =>
-                          setFormData({ ...formData, slug: e.target.value })
-                        }
-                        placeholder="cua-nhom-xingfa"
-                        className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
-                      />
-                    </div>
-                    <div className="space-y-4">
+                  <button 
+                    onClick={() => {
+                      setIsAdding(false);
+                      setEditingProduct(null);
+                    }}
+                    className="absolute top-6 right-6 p-2 text-gray-400 hover:text-black transition-colors"
+                  >
+                    <X size={24} />
+                  </button>
+                  <h2 className="text-2xl font-bold mb-8 pr-12 border-b pb-4">
+                    {editingProduct ? "Chỉnh sửa sản phẩm" : "Thêm sản phẩm mới"}
+                  </h2>
+                  <form
+                    onSubmit={handleSubmit}
+                    className="grid grid-cols-1 md:grid-cols-2 gap-8"
+                  >
+                    <div className="space-y-6">
                       <div>
-                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2.5">
+                          Tên sản phẩm
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={formData.title}
+                          onChange={(e) => {
+                            const newTitle = e.target.value;
+                            const titleSlug = generateSlug(newTitle);
+                            const finalSlug = formData.categorySlug
+                              ? `${formData.categorySlug}-${titleSlug}`
+                              : titleSlug;
+                            setFormData({
+                              ...formData,
+                              title: newTitle,
+                              slug: finalSlug,
+                            });
+                          }}
+                          placeholder="VD: Cửa nhôm Xingfa hệ 55"
+                          className="w-full bg-gray-50 border border-gray-100 rounded-xl px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all shadow-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2.5">
+                          Slug (Đường dẫn ví dụ: cua-nhom-xingfa)
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={formData.slug}
+                          onChange={(e) =>
+                            setFormData({ ...formData, slug: e.target.value })
+                          }
+                          placeholder="cua-nhom-xingfa"
+                          className="w-full bg-gray-50 border border-gray-100 rounded-xl px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all shadow-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2.5">
                           Danh mục
                         </label>
                         <select
@@ -704,7 +725,7 @@ export default function AdminPage() {
                               slug: formData.title ? finalSlug : formData.slug,
                             });
                           }}
-                          className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-sm"
+                          className="w-full bg-gray-50 border border-gray-100 rounded-xl px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-sm"
                           required
                         >
                           <option value="" disabled>
@@ -717,129 +738,127 @@ export default function AdminPage() {
                           ))}
                         </select>
                       </div>
-                    </div>
-                  </div>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
-                        Hình ảnh chính (Đại diện)
-                      </label>
-                      <div className="flex items-center space-x-4">
-                        {formData.image && (
-                          <div className="relative">
-                            <img
-                              src={formData.image}
-                              alt="Preview"
-                              className="w-16 h-16 rounded-lg object-cover border border-gray-200"
-                            />
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setFormData({ ...formData, image: "" })
-                              }
-                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5"
-                            >
-                              <X size={12} />
-                            </button>
-                          </div>
-                        )}
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2.5">
+                          Giá hiển thị
+                        </label>
                         <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handleImageUpload}
-                          className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                          type="text"
+                          required
+                          value={formData.price}
+                          onChange={(e) =>
+                            setFormData({ ...formData, price: e.target.value })
+                          }
+                          placeholder="Giá: Liên hệ"
+                          className="w-full bg-gray-50 border border-gray-100 rounded-xl px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-sm"
                         />
                       </div>
                     </div>
-
-                    <div>
-                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
-                        Album ảnh phụ (Nhiều ảnh)
-                      </label>
-                      <div className="space-y-4">
-                        <div className="flex flex-wrap gap-2">
-                          {formData.images?.map((img, idx) => (
-                            <div key={idx} className="relative group">
+                    <div className="space-y-6">
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2.5">
+                          Hình ảnh đại diện
+                        </label>
+                        <div className="flex items-center space-x-4">
+                          <div className="w-20 h-20 rounded-2xl bg-gray-50 border border-gray-100 flex-shrink-0 flex items-center justify-center overflow-hidden">
+                            {formData.image ? (
                               <img
-                                src={img}
-                                alt={`Album ${idx}`}
-                                className="w-16 h-16 rounded-lg object-cover border border-gray-200"
+                                src={formData.image}
+                                alt="Preview"
+                                className="w-full h-full object-cover"
                               />
-                              <button
-                                type="button"
-                                onClick={() => removeImage(idx)}
-                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                              >
-                                <X size={12} />
-                              </button>
-                            </div>
-                          ))}
+                            ) : (
+                              <Database className="text-gray-300" size={24} />
+                            )}
+                          </div>
+                          <div className="flex-1">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={handleImageUpload}
+                              className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all cursor-pointer"
+                            />
+                            <p className="mt-1 text-[10px] text-gray-400">Định dạng: JPG, PNG, WEBP. Dung lượng tối đa 5MB.</p>
+                          </div>
                         </div>
-                        <input
-                          type="file"
-                          multiple
-                          accept="image/*"
-                          onChange={handleMultipleImagesUpload}
-                          className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                        />
-                        <p className="text-[10px] text-gray-400">
-                          Chọn nhiều ảnh cùng lúc để thêm vào album.
-                        </p>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2.5">
+                          Album ảnh phụ ({formData.images?.length || 0})
+                        </label>
+                        <div className="space-y-4">
+                          <div className="flex flex-wrap gap-3">
+                            {formData.images?.map((img, idx) => (
+                              <div key={idx} className="relative group">
+                                <img
+                                  src={img}
+                                  alt={`Album ${idx}`}
+                                  className="w-16 h-16 rounded-xl object-cover border border-gray-200 shadow-sm"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => removeImage(idx)}
+                                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                  <X size={10} />
+                                </button>
+                              </div>
+                            ))}
+                            <label className="w-16 h-16 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50/30 transition-all">
+                              <Plus size={20} className="text-gray-400" />
+                              <input
+                                type="file"
+                                multiple
+                                accept="image/*"
+                                onChange={handleMultipleImagesUpload}
+                                className="hidden"
+                              />
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2.5">
+                          Mô tả chi tiết
+                        </label>
+                        <textarea
+                          rows={4}
+                          value={formData.description}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              description: e.target.value,
+                            })
+                          }
+                          placeholder="Nhập thông số kỹ thuật, ưu điểm..."
+                          className="w-full bg-gray-50 border border-gray-100 rounded-xl px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-sm resize-none"
+                        ></textarea>
                       </div>
                     </div>
-                    <div>
-                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
-                        Giá hiển thị
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={formData.price}
-                        onChange={(e) =>
-                          setFormData({ ...formData, price: e.target.value })
-                        }
-                        placeholder="Giá: Liên hệ"
-                        className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                      />
+                    <div className="md:col-span-2 flex justify-end gap-4 mt-4 border-t pt-8">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsAdding(false);
+                          setEditingProduct(null);
+                        }}
+                        className="px-8 py-3 rounded-xl font-bold text-sm bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all"
+                      >
+                        Hủy bỏ
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-8 py-3 rounded-xl font-bold text-sm bg-black text-white hover:bg-gray-800 transition-all flex items-center gap-2 shadow-xl shadow-black/10"
+                      >
+                        <Save size={18} />{" "}
+                        {editingProduct ? "Cập nhật sản phẩm" : "Lưu vào hệ thống"}
+                      </button>
                     </div>
-                    <div>
-                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
-                        Mô tả chi tiết
-                      </label>
-                      <textarea
-                        rows={3}
-                        value={formData.description}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            description: e.target.value,
-                          })
-                        }
-                        className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                      ></textarea>
-                    </div>
-                  </div>
-                  <div className="md:col-span-2 flex justify-end gap-3 pt-4">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsAdding(false);
-                        setEditingProduct(null);
-                      }}
-                      className="px-6 py-2.5 rounded-xl font-bold text-sm bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all"
-                    >
-                      Hủy
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-6 py-2.5 rounded-xl font-bold text-sm bg-black text-white hover:bg-gray-800 transition-all flex items-center gap-2"
-                    >
-                      <Save size={18} />{" "}
-                      {editingProduct ? "Cập nhật" : "Lưu sản phẩm"}
-                    </button>
-                  </div>
-                </form>
-              </motion.div>
+                  </form>
+                </motion.div>
+              </div>
             )}
 
             <div className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
@@ -946,6 +965,7 @@ export default function AdminPage() {
                     description: "",
                     image: "",
                   });
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
                 className="bg-purple-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-purple-700 transition-all shadow-lg shadow-purple-500/20"
               >
@@ -954,21 +974,39 @@ export default function AdminPage() {
             </div>
 
             {(isAddingCategory || editingCategory) && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mb-12 bg-white p-8 rounded-3xl shadow-xl border border-gray-100"
-              >
-                <h2 className="text-xl font-bold mb-6">
-                  {editingCategory ? "Chỉnh sửa danh mục" : "Thêm danh mục mới"}
-                </h2>
-                <form
-                  onSubmit={handleCategorySubmit}
-                  className="grid grid-cols-1 md:grid-cols-2 gap-6"
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  onClick={() => {
+                    setIsAddingCategory(false);
+                    setEditingCategory(null);
+                  }}
+                  className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                />
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  className="relative bg-white w-full max-w-xl p-8 rounded-3xl shadow-2xl border border-gray-100"
                 >
-                  <div className="space-y-4">
+                  <button 
+                    onClick={() => {
+                      setIsAddingCategory(false);
+                      setEditingCategory(null);
+                    }}
+                    className="absolute top-6 right-6 p-2 text-gray-400 hover:text-black transition-colors"
+                  >
+                    <X size={24} />
+                  </button>
+                  <h2 className="text-2xl font-bold mb-8 pr-12 border-b pb-4">
+                    {editingCategory ? "Chỉnh sửa danh mục" : "Thêm danh mục mới"}
+                  </h2>
+                  <form
+                    onSubmit={handleCategorySubmit}
+                    className="space-y-6"
+                  >
                     <div>
-                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2.5">
                         Tên Danh Mục
                       </label>
                       <input
@@ -984,11 +1022,11 @@ export default function AdminPage() {
                           });
                         }}
                         placeholder="VD: Cửa Kính"
-                        className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white transition-all"
+                        className="w-full bg-gray-50 border border-gray-100 rounded-xl px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white transition-all shadow-sm"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2.5">
                         Slug (Đường dẫn ví dụ: cua-kinh)
                       </label>
                       <input
@@ -1002,17 +1040,15 @@ export default function AdminPage() {
                           })
                         }
                         placeholder="cua-kinh"
-                        className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white transition-all"
+                        className="w-full bg-gray-50 border border-gray-100 rounded-xl px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white transition-all shadow-sm"
                       />
                     </div>
-                  </div>
-                  <div className="space-y-4">
                     <div>
-                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2.5">
                         Mô tả danh mục
                       </label>
                       <textarea
-                        rows={3}
+                        rows={4}
                         value={categoryFormData.description}
                         onChange={(e) =>
                           setCategoryFormData({
@@ -1020,31 +1056,32 @@ export default function AdminPage() {
                             description: e.target.value,
                           })
                         }
-                        className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all"
+                        placeholder="Nhập mô tả ngắn gọn cho danh mục..."
+                        className="w-full bg-gray-50 border border-gray-100 rounded-xl px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all shadow-sm resize-none"
                       ></textarea>
                     </div>
-                  </div>
-                  <div className="md:col-span-2 flex justify-end gap-3 pt-4">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsAddingCategory(false);
-                        setEditingCategory(null);
-                      }}
-                      className="px-6 py-2.5 rounded-xl font-bold text-sm bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all"
-                    >
-                      Hủy
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-6 py-2.5 rounded-xl font-bold text-sm bg-black text-white hover:bg-gray-800 transition-all flex items-center gap-2"
-                    >
-                      <Save size={18} />{" "}
-                      {editingCategory ? "Cập nhật" : "Lưu Danh Mục"}
-                    </button>
-                  </div>
-                </form>
-              </motion.div>
+                    <div className="flex justify-end gap-4 mt-4 border-t pt-8">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsAddingCategory(false);
+                          setEditingCategory(null);
+                        }}
+                        className="px-8 py-3 rounded-xl font-bold text-sm bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all"
+                      >
+                        Hủy bỏ
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-8 py-3 rounded-xl font-bold text-sm bg-black text-white hover:bg-gray-800 transition-all flex items-center gap-2 shadow-xl shadow-black/10"
+                      >
+                        <Save size={18} />{" "}
+                        {editingCategory ? "Cập nhật danh mục" : "Lưu danh mục"}
+                      </button>
+                    </div>
+                  </form>
+                </motion.div>
+              </div>
             )}
 
             <div className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
