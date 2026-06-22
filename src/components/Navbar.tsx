@@ -2,6 +2,7 @@ import { motion } from 'motion/react';
 import { Menu, X, Phone } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import Logo from './Logo';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -69,13 +70,8 @@ export default function Navbar() {
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
-          <Link to="/" className="flex-shrink-0 flex items-center gap-2">
-            <div className="w-10 h-10 bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center rounded-lg shadow-sm">
-              <span className="text-white font-bold text-xl">V7</span>
-            </div>
-            <span className="text-xl font-bold tracking-tight text-gray-900 border-l-2 border-gray-200 pl-3">
-              Nhôm kính <span className="text-sky-500">Văn Bảy</span>
-            </span>
+          <Link to="/" className="flex-shrink-0">
+            <Logo />
           </Link>
           
           <div className="hidden md:flex items-center space-x-6">

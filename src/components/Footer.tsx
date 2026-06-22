@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Facebook, Instagram, Youtube, Phone, Mail } from 'lucide-react';
+import Logo from './Logo';
 
 export default function Footer() {
   const location = useLocation();
@@ -38,13 +39,8 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
           {/* Column 1: Brand & Desc */}
           <div className="space-y-6">
-            <Link to="/" className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center rounded-lg shadow-sm">
-                <span className="text-white font-bold text-xl">V7</span>
-              </div>
-              <span className="text-xl font-bold tracking-tight text-gray-900 border-l-2 border-gray-200 pl-3">
-                Nhôm kính <span className="text-sky-500">Văn Bảy</span>
-              </span>
+            <Link to="/" className="inline-block">
+              <Logo />
             </Link>
             <p className="text-sm text-gray-500 leading-relaxed max-w-sm">
               Chuyên gia giải pháp nhôm kính chuẩn mực mới cho kiến trúc hiện đại. Đẹp – Bền – Chuẩn trong từng chi tiết thi công.

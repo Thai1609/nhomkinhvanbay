@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight, Phone } from 'lucide-react';
+import { ChevronRight, Phone, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { getCategories, getPricing } from '../services/productService';
 import { Category, Pricing as PricingType } from '../types';
 
@@ -9,14 +9,64 @@ const normalizePrice = (price?: string) => {
   return price.replace(/^Giá:\s*/i, '').trim() || 'Liên hệ';
 };
 
-function PricingTable({
-  category,
-  pricings,
-}: {
+const getNumericPrice = (price?: string): number => {
+  if (!price) return 0;
+  const firstPart = price.split('-')[0].split('đ')[0].split('/')[0];
+  const clean = firstPart.replace(/[^0-9]/g, '');
+  const num = parseInt(clean, 10);
+  return isNaN(num) ? 0 : num;
+};
+
+interface PricingTableProps {
   category: Category;
   pricings: PricingType[];
-}) {
+}
+
+function PricingTable({ category, pricings }: PricingTableProps) {
+  const [sortField, setSortField] = useState<'title' | 'price' | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+
   if (pricings.length === 0) return null;
+
+  const handleSort = (field: 'title' | 'price') => {
+    if (sortField === field) {
+      if (sortDirection === 'asc') {
+        setSortDirection('desc');
+      } else {
+        setSortField(null); // Reset sort
+      }
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  const sortedPricings = [...pricings].sort((a, b) => {
+    if (!sortField) return 0; // maintain default order
+
+    if (sortField === 'title') {
+      const titleA = a.title.toLowerCase();
+      const titleB = b.title.toLowerCase();
+      return sortDirection === 'asc'
+        ? titleA.localeCompare(titleB, 'vi')
+        : titleB.localeCompare(titleA, 'vi');
+    } else {
+      const priceA = getNumericPrice(a.price);
+      const priceB = getNumericPrice(b.price);
+      return sortDirection === 'asc' ? priceA - priceB : priceB - priceA;
+    }
+  });
+
+  const renderSortIcon = (field: 'title' | 'price') => {
+    if (sortField !== field) {
+      return <ArrowUpDown size={14} className="ml-1.5 text-gray-400 group-hover:text-gray-600 transition-colors" />;
+    }
+    return sortDirection === 'asc' ? (
+      <ArrowUp size={14} className="ml-1.5 text-sky-600 animate-bounce-subtle" />
+    ) : (
+      <ArrowDown size={14} className="ml-1.5 text-sky-600 animate-bounce-subtle" />
+    );
+  };
 
   return (
     <section>
@@ -25,27 +75,53 @@ function PricingTable({
           <p className="text-sky-500 font-bold uppercase tracking-widest text-xs mb-2">Bảng báo giá tham khảo</p>
           <h3 className="text-2xl font-bold text-gray-900">Bảng báo giá {category.title}</h3>
         </div>
-        <Link
-          to={`/danh-muc/${category.slug}`}
-          className="inline-flex items-center gap-2 text-sm font-bold text-sky-600 hover:text-sky-700"
-        >
-          Xem danh mục <ChevronRight size={16} />
-        </Link>
+        <div className="flex items-center gap-4">
+          {sortField && (
+            <button
+              onClick={() => setSortField(null)}
+              className="text-xs text-gray-500 hover:text-sky-600 transition-colors border border-gray-200 px-3 py-1.5 rounded-lg bg-gray-50/50"
+            >
+              Đặt lại sắp xếp
+            </button>
+          )}
+          <Link
+            to={`/danh-muc/${category.slug}`}
+            className="inline-flex items-center gap-2 text-sm font-bold text-sky-600 hover:text-sky-700"
+          >
+            Xem danh mục <ChevronRight size={16} />
+          </Link>
+        </div>
       </div>
 
       <div className="overflow-x-auto rounded-2xl border border-gray-200 shadow-sm">
         <table className="min-w-[720px] w-full border-collapse bg-white text-sm">
           <thead className="bg-gray-50">
             <tr>
-              <th className="border-b border-r border-gray-200 px-4 py-3 text-left font-bold text-gray-900">Hệ / danh mục</th>
-              <th className="border-b border-r border-gray-200 px-4 py-3 text-left font-bold text-gray-900">Mô tả</th>
-              <th className="border-b border-r border-gray-200 px-4 py-3 text-left font-bold text-gray-900">Hạng mục</th>
-              <th className="border-b border-gray-200 px-4 py-3 text-left font-bold text-gray-900">Giá tham khảo</th>
+              <th className="border-b border-r border-gray-200 px-4 py-3.5 text-left font-bold text-gray-900 w-[20%]">Hệ / danh mục</th>
+              <th className="border-b border-r border-gray-200 px-4 py-3.5 text-left font-bold text-gray-900 w-[35%]">Mô tả</th>
+              <th
+                onClick={() => handleSort('title')}
+                className="border-b border-r border-gray-200 px-4 py-3.5 text-left font-bold text-gray-900 cursor-pointer hover:bg-gray-100/80 transition-colors select-none group w-[25%]"
+              >
+                <div className="flex items-center">
+                  Hạng mục
+                  {renderSortIcon('title')}
+                </div>
+              </th>
+              <th
+                onClick={() => handleSort('price')}
+                className="border-b border-gray-200 px-4 py-3.5 text-left font-bold text-gray-900 cursor-pointer hover:bg-gray-100/80 transition-colors select-none group w-[20%]"
+              >
+                <div className="flex items-center">
+                  Giá tham khảo
+                  {renderSortIcon('price')}
+                </div>
+              </th>
             </tr>
           </thead>
           <tbody>
-            {pricings.map((pricing, index) => (
-              <tr key={pricing.slug} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50/60'}>
+            {sortedPricings.map((pricing, index) => (
+              <tr key={pricing.id || `${pricing.slug}-${index}`} className={index % 2 === 0 ? 'bg-white hover:bg-gray-50/30' : 'bg-gray-50/60 hover:bg-gray-50/30'}>
                 <td className="border-r border-t border-gray-200 px-4 py-3 text-gray-700">{category.title}</td>
                 <td className="border-r border-t border-gray-200 px-4 py-3 text-gray-700">{pricing.description || 'Theo cấu hình'}</td>
                 <td className="border-r border-t border-gray-200 px-4 py-3 font-medium text-gray-900">{pricing.title}</td>

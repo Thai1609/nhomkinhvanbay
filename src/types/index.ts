@@ -14,6 +14,7 @@ export interface Product {
 }
 
 export interface Pricing {
+  id?: string;
   slug: string;
   title: string;
   category: string;
