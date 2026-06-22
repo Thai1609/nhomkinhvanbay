@@ -98,9 +98,29 @@ export default function ProductPage() {
                 referrerPolicy="no-referrer"
               />
             </motion.div>
+            
+            {/* Gallery thumbnails */}
+            {allImages.length > 1 && (
+              <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                {allImages.map((img, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setActiveImage(img)}
+                    className={`relative w-20 h-20 flex-shrink-0 rounded-xl overflow-hidden border-2 transition-all ${activeImage === img ? 'border-sky-500 opacity-100' : 'border-transparent opacity-60 hover:opacity-100'}`}
+                  >
+                    <img 
+                      src={img} 
+                      alt={`Thumbnail ${idx}`} 
+                      className="w-full h-full object-cover"
+                      referrerPolicy="no-referrer"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* Thông tin sản phẩm */}
+          {/* Thông tựng sản phẩm */}
           <div className="mt-6 lg:mt-0">
             <div className="hidden lg:block">
               <Link to="/#products" className="inline-flex items-center gap-2 text-sm font-bold text-gray-400 hover:text-black transition-colors mb-4">
@@ -108,15 +128,15 @@ export default function ProductPage() {
               </Link>
               <p className="text-sky-500 font-bold uppercase tracking-widest text-xs mb-2">{product.category}</p>
             </div>
-            <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">{product.title}</h1>
-            <div className="inline-block bg-sky-50 px-4 py-2 rounded-full text-sky-600 font-bold text-base mb-6 border border-sky-100">
-              Giá: Liên hệ
+            <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-6">{product.title}</h1>
+            <div className="inline-block bg-sky-50 px-6 py-3 rounded-full text-sky-600 font-bold text-lg mb-8 border border-sky-100">
+              {product.price || "Giá: Liên hệ"}
             </div>
             
-            <div className="bg-gray-50 p-6 rounded-xl mb-8">
-              <h3 className="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wider">Thông tin chi tiết</h3>
+            <div className="bg-gray-50 p-6 md:p-8 rounded-2xl mb-10">
+              <h3 className="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wider">Thông tin chi tiết</h3>
               <p className="text-gray-600 text-sm leading-relaxed">
-                {product.description || "Sản phẩm cao cấp được gia công theo tiêu chuẩn kỹ thuật nghiêm ngặt. Sử dụng nhôm Xingfa nhập khẩu và kính cường lực an toàn, đảm bảo độ bền tối ưu cho mọi công trình."}
+                {product.description || "Sản phẩm cao cấp được gia công theo tiêu chuẩn kỹ thuật nghiêm ngặt. Khách hàng vui lòng liên hệ chi tiết để được tư vấn thiết kế và báo giá cho từng công trình."}
               </p>
             </div>
 
@@ -183,9 +203,9 @@ export default function ProductPage() {
                       referrerPolicy="no-referrer"
                     />
                   </div>
-                  <div className="p-4">
+                  <div className="p-4 bg-white">
                     <h3 className="text-sm font-bold text-gray-900 line-clamp-1 mb-1">{item.title}</h3>
-                    <p className="text-xs text-sky-500 font-bold">Liên hệ</p>
+                    <p className="text-xs text-sky-500 font-bold">{item.price || "Giá: Liên hệ"}</p>
                   </div>
                 </Link>
               ))}

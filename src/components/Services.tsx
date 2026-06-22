@@ -1,46 +1,59 @@
+import React from 'react';
+import { Compass, Hammer, Wrench, Truck } from 'lucide-react';
 import { motion } from 'motion/react';
-import { SERVICES } from '../constants/data';
+
+const features = [
+  { 
+    icon: <Compass size={24} />, 
+    title: 'Tư vấn & Thiết kế', 
+    description: 'Khảo sát thực tế, tư vấn giải pháp nhôm kính tối ưu nhất cho diện tích và công suất sử dụng của bạn.' 
+  },
+  { 
+    icon: <Hammer size={24} />, 
+    title: 'Thi công & Lắp đặt', 
+    description: 'Đội ngũ thợ tay nghề cao, đảm bảo thi công đúng tiến độ, an toàn và thẩm mỹ tuyệt đối.' 
+  },
+  { 
+    icon: <Wrench size={24} />, 
+    title: 'Bảo trì & Sửa chữa', 
+    description: 'Dịch vụ bảo trì định kỳ và sửa chữa thay thế các linh kiện, phụ kiện nhôm kính hư hỏng.' 
+  },
+  { 
+    icon: <Truck size={24} />, 
+    title: 'Vận chuyển tận nơi', 
+    description: 'Hệ thống vận tải chuyên dụng đảm bảo hàng hóa đến công trình nguyên vẹn, không trầy xước.' 
+  }
+];
 
 export default function Services() {
   return (
-    <section id="services" className="py-16 bg-gray-50 scroll-mt-20">
+    <section className="py-24 bg-slate-50" id="dich-vu">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-10">
-          <motion.p 
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            className="text-sky-500 font-bold uppercase tracking-widest text-xs mb-3"
-          >
-            Dịch vụ chuyên nghiệp
-          </motion.p>
-          <motion.h2 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            className="text-4xl font-bold text-gray-900"
-          >
+        <div className="text-center mb-16">
+          <span className="text-xs font-bold text-sky-500 uppercase tracking-widest block mb-3">
+            DỊCH VỤ CHUYÊN NGHIỆP
+          </span>
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
             Chúng tôi làm được gì cho bạn?
-          </motion.h2>
+          </h2>
         </div>
-
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {SERVICES.map((service, index) => (
-            <motion.div
-              key={index}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          {features.map((feature, idx) => (
+            <motion.div 
+              key={idx}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
               viewport={{ once: true }}
-              className="bg-white p-6 rounded-2xl border border-gray-100 hover:shadow-xl hover:shadow-sky-100 hover:-translate-y-1 transition-all group"
+              transition={{ delay: idx * 0.1 }}
+              className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow flex flex-col justify-between"
             >
-              <div className="mb-5 p-4 bg-sky-50 rounded-xl inline-block group-hover:bg-gradient-to-br group-hover:from-sky-400 group-hover:to-blue-500 group-hover:text-white transition-all duration-300 shadow-sm text-sky-600">
-                <div className="scale-90 origin-center">
-                  {service.icon}
+              <div>
+                <div className="w-12 h-12 bg-sky-50 text-sky-500 rounded-xl flex items-center justify-center mb-6">
+                  {feature.icon}
                 </div>
+                <h3 className="text-lg font-bold text-gray-900 mb-3">{feature.title}</h3>
+                <p className="text-sm text-gray-500 leading-relaxed">{feature.description}</p>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">{service.title}</h3>
-              <p className="text-gray-600 leading-relaxed text-sm">
-                {service.description}
-              </p>
             </motion.div>
           ))}
         </div>
@@ -48,3 +61,4 @@ export default function Services() {
     </section>
   );
 }
+

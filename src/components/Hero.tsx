@@ -1,87 +1,108 @@
+import React from 'react';
 import { motion } from 'motion/react';
 import { ArrowRight, CheckCircle2 } from 'lucide-react';
 
 export default function Hero() {
   return (
-    <section id="home" className="relative pt-24 pb-12 lg:pt-32 lg:pb-16 overflow-hidden bg-white scroll-mt-20">
+    <section id="home" className="relative overflow-hidden bg-white pt-32 pb-24 lg:pt-40 lg:pb-32 scroll-mt-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="lg:grid lg:grid-cols-2 lg:gap-12 items-center">
-          <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
-          >
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-sky-50 text-sky-600 text-xs font-bold uppercase tracking-wider mb-4 border border-sky-100 shadow-sm">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-sky-500"></span>
-              </span>
-              Bền vững theo thời gian
-            </div>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-[1.2] mb-6">
-              <span className="block mb-2 whitespace-nowrap tracking-tight">Kiến tạo <span className="text-sky-500 underline decoration-sky-200 underline-offset-4">Không Gian</span>,</span>
-              <span className="block tracking-tight">Nâng Tầm Đẳng Cấp</span>
-            </h1>
-            <p className="text-lg text-gray-600 mb-8 max-w-md leading-relaxed">
+        <div className="grid lg:grid-cols-12 gap-12 lg:gap-16 items-center">
+          
+          {/* Left Column: Copywriting & Actions */}
+          <div className="lg:col-span-7 flex flex-col justify-center">
+            {/* Tag Badge */}
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="inline-flex items-center gap-1.5 bg-sky-50 text-sky-600 text-xs font-semibold px-4 py-2 rounded-full mb-6 border border-sky-100 self-start shadow-sm"
+            >
+              <span className="w-1.5 h-1.5 bg-sky-500 rounded-full animate-pulse"></span>
+              BỀN VỮNG THEO THỜI GIAN
+            </motion.div>
+
+            {/* Dynamic Typography Title */}
+            <motion.h1 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 }}
+              className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-gray-900 tracking-tight leading-tight lg:leading-[1.1] mb-6"
+            >
+              Kiến tạo <span className="text-sky-500 relative inline-block underline decoration-sky-200 decoration-3 underline-offset-8">Không Gian</span>,
+              <br />
+              Nâng Tầm Đẳng Cấp
+            </motion.h1>
+
+            {/* Supporting Copywriting */}
+            <motion.p 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="text-base sm:text-lg text-gray-500 mb-8 leading-relaxed max-w-xl"
+            >
               Giải pháp nhôm kính thế hệ mới. Tối ưu không gian, đón trọn ánh sáng và vẻ đẹp tinh tế cho ngôi nhà của bạn.
-            </p>
-            
-            <div className="flex flex-wrap gap-4">
+            </motion.p>
+
+            {/* Double CTA Buttons */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+              className="flex flex-wrap items-center gap-4 mb-8"
+            >
               <a 
-                href="#contact" 
-                className="bg-gradient-to-r from-sky-500 to-blue-600 text-white px-8 py-4 rounded-full text-base font-bold hover:opacity-90 transition-all flex items-center gap-2 shadow-xl shadow-sky-500/20"
+                href="#lien-he" 
+                className="inline-flex items-center justify-center px-8 py-4 bg-sky-500 hover:bg-sky-600 text-white font-bold rounded-full transition-all shadow-lg shadow-sky-500/25 gap-2 group transform hover:-translate-y-0.5"
               >
-                Nhận tư vấn ngay <ArrowRight size={20} />
+                Nhận tư vấn ngay 
+                <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
               </a>
               <a 
                 href="#products" 
-                className="bg-white text-gray-900 border-2 border-gray-100 px-8 py-4 rounded-full text-base font-bold hover:border-sky-300 hover:text-sky-600 transition-all"
+                className="inline-flex items-center justify-center px-8 py-4 bg-white border border-gray-200 hover:border-gray-300 text-gray-700 hover:text-gray-900 font-bold rounded-full transition-all"
               >
                 Xem sản phẩm
               </a>
-            </div>
+            </motion.div>
 
-            <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="text-green-500" size={24} />
-                <span className="text-sm font-medium text-gray-700">Thi công nhanh chóng</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="text-green-500" size={24} />
-                <span className="text-sm font-medium text-gray-700">Chất lượng làm nên uy tín</span>
-              </div>
-            </div>
-          </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1 }}
-            viewport={{ once: true }}
-            className="mt-12 lg:mt-0 relative"
-          >
-            <div className="relative rounded-2xl overflow-hidden shadow-2xl mx-auto lg:ml-auto w-full max-w-lg lg:max-w-none">
+          </div>
+
+          {/* Right Column: Interactive Featured Image with Overlay Card */}
+          <div className="lg:col-span-5 relative w-full flex justify-center">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.1, duration: 0.5 }}
+              className="relative w-full max-w-lg lg:max-w-none aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl border border-gray-100 group"
+            >
               <img 
-                src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80" 
-                alt="Nhôm kính cao cấp" 
-                className="w-full aspect-square lg:aspect-[4/3] object-cover"
+                src="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=80" 
+                alt="Thiết kế nhôm kính biệt thự cao cấp" 
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
                 referrerPolicy="no-referrer"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
-              <div className="absolute bottom-6 left-6 right-6">
-                <div className="bg-white/95 backdrop-blur-md shadow-xl p-5 rounded-xl border border-white/40">
-                  <p className="text-xs font-bold text-sky-500 mb-1">Dự án tiêu biểu</p>
-                  <p className="text-lg font-bold text-gray-900">Biệt thự cao cấp</p>
-                </div>
+              
+              {/* Overlay Glassmorphism Project Card */}
+              <div className="absolute bottom-6 left-6 right-6 bg-white/95 backdrop-blur-md p-5 rounded-2xl shadow-lg border border-white/20">
+                <span className="text-[10px] font-bold text-sky-500 uppercase tracking-widest block mb-1">
+                  Dự án tiêu biểu
+                </span>
+                <h4 className="text-base font-bold text-gray-900">
+                  Biệt thự cao cấp
+                </h4>
               </div>
-            </div>
-            
-            {/* Abstract element */}
-            <div className="absolute -top-10 -right-10 w-40 h-40 bg-blue-100 rounded-full blur-3xl opacity-50 z-0"></div>
-          </motion.div>
+            </motion.div>
+          </div>
+
         </div>
+      </div>
+
+      {/* Atmospheric Background Ambient Blurs */}
+      <div className="absolute top-0 inset-x-0 h-full overflow-hidden opacity-40 z-0 flex items-center justify-center pointer-events-none">
+        <div className="w-[800px] h-[800px] bg-sky-50 rounded-full blur-3xl opacity-60 absolute -top-40 -left-40"></div>
+        <div className="w-[600px] h-[600px] bg-blue-50 rounded-full blur-3xl opacity-60 absolute top-40 -right-20"></div>
       </div>
     </section>
   );
 }
+

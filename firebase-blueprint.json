@@ -39,6 +39,21 @@
         "email": { "type": "string" }
       },
       "required": ["uid", "email"]
+    },
+    "Pricing": {
+      "title": "Pricing",
+      "description": "Pricing information for custom components",
+      "type": "object",
+      "properties": {
+        "slug": { "type": "string" },
+        "title": { "type": "string" },
+        "category": { "type": "string" },
+        "categorySlug": { "type": "string" },
+        "price": { "type": "string" },
+        "description": { "type": "string" },
+        "ownerId": { "type": "string" }
+      },
+      "required": ["slug", "title", "category", "categorySlug", "price", "ownerId"]
     }
   },
   "firestore": {
@@ -49,6 +64,10 @@
     "/categories/{categoryId}": {
       "schema": "Category",
       "description": "Collection of categories"
+    },
+    "/pricing/{pricingId}": {
+      "schema": "Pricing",
+      "description": "Collection of pricing data"
     },
     "/admins/{adminId}": {
       "schema": "Admin",

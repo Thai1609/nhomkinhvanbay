@@ -1,75 +1,176 @@
+import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { Facebook, Instagram, Youtube, Phone, Mail } from 'lucide-react';
 
 export default function Footer() {
+  const location = useLocation();
+  const isHome = location.pathname === '/';
+
+  const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    if (href.startsWith('#')) {
+      if (isHome) {
+        e.preventDefault();
+        let targetId = href;
+        if (href === '#services') {
+          targetId = '#dich-vu';
+        } else if (href === '#contact') {
+          targetId = '#lien-he';
+        } else if (href === '#home') {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          window.history.pushState(null, '', '/');
+          return;
+        }
+
+        const element = document.querySelector(targetId);
+        if (element) {
+          const yOffset = -80;
+          const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+          window.scrollTo({ top: y, behavior: 'smooth' });
+          window.history.pushState(null, '', href);
+        }
+      }
+    }
+  };
+
   return (
-    <footer className="bg-white border-t border-gray-100 pt-20 pb-10">
+    <footer className="bg-white border-t border-gray-100 py-16 text-gray-600">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid md:grid-cols-4 gap-12 mb-16">
-          <div className="col-span-1 md:col-span-1">
-            <div className="flex items-center gap-2 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
+          {/* Column 1: Brand & Desc */}
+          <div className="space-y-6">
+            <Link to="/" className="flex items-center gap-2">
               <div className="w-10 h-10 bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center rounded-lg shadow-sm">
                 <span className="text-white font-bold text-xl">V7</span>
               </div>
               <span className="text-xl font-bold tracking-tight text-gray-900 border-l-2 border-gray-200 pl-3">
                 Nhôm kính <span className="text-sky-500">Văn Bảy</span>
               </span>
-            </div>
-            <p className="text-gray-500 text-sm leading-relaxed mb-6">
+            </Link>
+            <p className="text-sm text-gray-500 leading-relaxed max-w-sm">
               Chuyên gia giải pháp nhôm kính chuẩn mực mới cho kiến trúc hiện đại. Đẹp – Bền – Chuẩn trong từng chi tiết thi công.
             </p>
-            <div className="flex gap-4">
-              <a href="#" className="w-10 h-10 rounded-full border border-gray-100 flex items-center justify-center text-gray-400 hover:bg-sky-50 hover:text-sky-500 hover:border-sky-500 transition-all transition-colors">
+            <div className="flex gap-3">
+              <a 
+                href="#" 
+                className="w-10 h-10 rounded-full border border-gray-100 flex items-center justify-center text-gray-400 hover:text-sky-500 hover:border-sky-500 transition-all hover:bg-sky-50"
+                aria-label="Facebook"
+              >
                 <Facebook size={18} />
               </a>
-              <a href="#" className="w-10 h-10 rounded-full border border-gray-100 flex items-center justify-center text-gray-400 hover:bg-pink-50 hover:text-pink-600 hover:border-pink-300 transition-all transition-colors">
+              <a 
+                href="#" 
+                className="w-10 h-10 rounded-full border border-gray-100 flex items-center justify-center text-gray-400 hover:text-sky-500 hover:border-sky-500 transition-all hover:bg-sky-50"
+                aria-label="Instagram"
+              >
                 <Instagram size={18} />
               </a>
-              <a href="#" className="w-10 h-10 rounded-full border border-gray-100 flex items-center justify-center text-gray-400 hover:bg-red-50 hover:text-red-600 hover:border-red-300 transition-all transition-colors">
+              <a 
+                href="#" 
+                className="w-10 h-10 rounded-full border border-gray-100 flex items-center justify-center text-gray-400 hover:text-sky-500 hover:border-sky-500 transition-all hover:bg-sky-50"
+                aria-label="Youtube"
+              >
                 <Youtube size={18} />
               </a>
             </div>
           </div>
 
+          {/* Column 2: Quick Links */}
           <div>
-            <h5 className="font-bold text-gray-900 mb-6">Liên kết nhanh</h5>
-            <ul className="space-y-4 text-sm font-medium">
-              <li><a href="#home" className="text-gray-500 hover:text-sky-500">Trang chủ</a></li>
-              <li><a href="#services" className="text-gray-500 hover:text-sky-500">Dịch vụ</a></li>
-              <li><a href="#products" className="text-gray-500 hover:text-sky-500">Sản phẩm</a></li>
-              <li><a href="#contact" className="text-gray-500 hover:text-sky-500">Tư vấn báo giá</a></li>
+            <h3 className="font-bold text-gray-900 mb-6 text-base tracking-wide">Liên kết nhanh</h3>
+            <ul className="space-y-4 text-sm">
+              <li>
+                <a 
+                  href="#home" 
+                  onClick={(e) => handleLinkClick(e, '#home')}
+                  className="hover:text-sky-500 transition-colors"
+                >
+                  Trang chủ
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="#services" 
+                  onClick={(e) => handleLinkClick(e, '#services')}
+                  className="hover:text-sky-500 transition-colors"
+                >
+                  Dịch vụ
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="#products" 
+                  onClick={(e) => handleLinkClick(e, '#products')}
+                  className="hover:text-sky-500 transition-colors"
+                >
+                  Sản phẩm
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="#pricing" 
+                  onClick={(e) => handleLinkClick(e, '#pricing')}
+                  className="hover:text-sky-500 transition-colors"
+                >
+                  Tư vấn báo giá
+                </a>
+              </li>
             </ul>
           </div>
 
+          {/* Column 3: Main Products */}
           <div>
-            <h5 className="font-bold text-gray-900 mb-6">Sản phẩm chính</h5>
-            <ul className="space-y-4 text-sm font-medium">
-              <li><a href="#" className="text-gray-500 hover:text-sky-500">Cửa nhôm Xingfa</a></li>
-              <li><a href="#" className="text-gray-500 hover:text-sky-500">Kính cường lực</a></li>
-              <li><a href="#" className="text-gray-500 hover:text-sky-500">Phòng tắm kính</a></li>
-              <li><a href="#" className="text-gray-500 hover:text-sky-500">Cầu thang kính</a></li>
+            <h3 className="font-bold text-gray-900 mb-6 text-base tracking-wide">Sản phẩm chính</h3>
+            <ul className="space-y-4 text-sm">
+              <li>
+                <a href="#products" onClick={(e) => handleLinkClick(e, '#products')} className="hover:text-sky-500 transition-colors">
+                  Cửa nhôm Xingfa
+                </a>
+              </li>
+              <li>
+                <a href="#products" onClick={(e) => handleLinkClick(e, '#products')} className="hover:text-sky-500 transition-colors">
+                  Kính cường lực
+                </a>
+              </li>
+              <li>
+                <a href="#products" onClick={(e) => handleLinkClick(e, '#products')} className="hover:text-sky-500 transition-colors">
+                  Phòng tắm kính
+                </a>
+              </li>
+              <li>
+                <a href="#products" onClick={(e) => handleLinkClick(e, '#products')} className="hover:text-sky-500 transition-colors">
+                  Cầu thang kính
+                </a>
+              </li>
             </ul>
           </div>
 
+          {/* Column 4: Contact Support */}
           <div>
-            <h5 className="font-bold text-gray-900 mb-6">Hỗ trợ khách hàng</h5>
-            <div className="space-y-4">
-              <a href="tel:0909568638" className="flex items-center gap-3 text-sm font-medium text-gray-600 hover:text-sky-500">
-                <Phone size={16} /> 0909.568.638
-              </a>
-              <a href="mailto:vanbay@gmail.com" className="flex items-center gap-3 text-sm font-medium text-gray-600 hover:text-sky-500">
-                <Mail size={16} /> vanbay@gmail.com
-              </a>
-            </div>
+            <h3 className="font-bold text-gray-900 mb-6 text-base tracking-wide">Hỗ trợ khách hàng</h3>
+            <ul className="space-y-4 text-sm">
+              <li className="flex items-center gap-3">
+                <Phone size={18} className="text-sky-500 flex-shrink-0" />
+                <a href="tel:0909568638" className="hover:text-sky-500 transition-colors font-medium">
+                  0909.568.638
+                </a>
+              </li>
+              <li className="flex items-center gap-3">
+                <Mail size={18} className="text-sky-500 flex-shrink-0" />
+                <a href="mailto:vanbay@gmail.com" className="hover:text-sky-500 transition-colors">
+                  vanbay@gmail.com
+                </a>
+              </li>
+            </ul>
           </div>
         </div>
 
-        <div className="pt-10 border-t border-gray-50 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-xs text-gray-400">
-            © {new Date().getFullYear()} Nhôm kính Văn Bảy. All rights reserved.
-          </p>
-          <div className="flex gap-6 text-xs text-gray-400">
-            <a href="#" className="hover:text-gray-600">Chính sách bảo mật</a>
-            <a href="#" className="hover:text-gray-600">Chính sách bảo hành</a>
+        {/* Bottom copyright bar */}
+        <div className="border-t border-gray-100 mt-12 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-400">
+          <p>&copy; {new Date().getFullYear()} Nhôm Kính Văn Bảy. Tất cả quyền được bảo lưu.</p>
+          <div className="flex gap-4">
+            <a href="#" className="hover:text-sky-500 transition-colors">Chính sách bảo mật</a>
+            <span className="text-gray-200">|</span>
+            <a href="#" className="hover:text-sky-500 transition-colors">Điều khoản dịch vụ</a>
           </div>
         </div>
       </div>

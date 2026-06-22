@@ -2,5 +2,7 @@
   "name": "NhomKinhVanBay",
   "description": "Chuyên tư vấn, thiết kế và thi công các sản phẩm nhôm kính cao cấp: cửa nhôm Xingfa, kính cường lực, cầu thang, lan can, phòng tắm kính.",
   "requestFramePermissions": [],
-  "majorCapabilities": []
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }

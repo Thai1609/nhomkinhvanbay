@@ -10,7 +10,7 @@ import {
   getDoc,
 } from "firebase/firestore";
 import { db, auth } from "../lib/firebase";
-import { Product, Category } from "../types";
+import { Product, Category, Pricing } from "../types";
 
 enum OperationType {
   CREATE = "create",
@@ -186,7 +186,54 @@ export const deleteProduct = async (id: string) => {
     handleFirestoreError(
       error,
       OperationType.DELETE,
-      `${PRODUCTS_COLLECTION}/${id}`,
+      `${PRODUCTS_COLLECTION}/${id}`
     );
+  }
+};
+
+export const getPricing = async () => {
+  try {
+    const querySnapshot = await getDocs(collection(db, "pricing"));
+    return querySnapshot.docs.map(
+      (doc) => ({ id: doc.id, ...doc.data() }) as Pricing & { id: string }
+    );
+  } catch (error) {
+    handleFirestoreError(error, OperationType.LIST, "pricing");
+    return [];
+  }
+};
+
+export const addPricing = async (pricing: Omit<Pricing, "id">) => {
+  try {
+    const docRef = await addDoc(collection(db, "pricing"), {
+      ...pricing,
+      ownerId: auth.currentUser?.uid,
+      createdBy: auth.currentUser?.email,
+      createdAt: Date.now(),
+    });
+    return docRef.id;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.CREATE, "pricing");
+  }
+};
+
+export const updatePricing = async (id: string, pricing: Partial<Pricing>) => {
+  try {
+    const docRef = doc(db, "pricing", id);
+    const { id: _, ...dataToSave } = pricing as any;
+    await updateDoc(docRef, {
+      ...dataToSave,
+      ownerId: auth.currentUser?.uid,
+    });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.UPDATE, `pricing/${id}`);
+  }
+};
+
+export const deletePricing = async (id: string) => {
+  try {
+    await deleteDoc(doc(db, "pricing", id));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, `pricing/${id}`);
   }
 };

@@ -2,8 +2,8 @@ import { useParams, Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { ArrowLeft, ChevronRight, Phone } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { getProducts, getCategories } from '../services/productService';
-import { Product, Category } from '../types';
+import { getProducts, getCategories, getPricing } from '../services/productService';
+import { Product, Category, Pricing as PricingType } from '../types';
 
 const normalizePrice = (price?: string) => {
   if (!price) return 'Liên hệ';
@@ -12,12 +12,12 @@ const normalizePrice = (price?: string) => {
 
 function CategoryPriceTable({
   category,
-  products,
+  pricings,
 }: {
   category: Category;
-  products: Product[];
+  pricings: PricingType[];
 }) {
-  if (products.length === 0) return null;
+  if (pricings.length === 0) return null;
 
   return (
     <section className="mb-14">
@@ -35,18 +35,18 @@ function CategoryPriceTable({
           <thead className="bg-gray-50">
             <tr>
               <th className="border-b border-r border-gray-200 px-4 py-3 text-left font-bold text-gray-900">Danh mục</th>
-              <th className="border-b border-r border-gray-200 px-4 py-3 text-left font-bold text-gray-900">Phụ kiện</th>
+              <th className="border-b border-r border-gray-200 px-4 py-3 text-left font-bold text-gray-900">Mô tả</th>
               <th className="border-b border-r border-gray-200 px-4 py-3 text-left font-bold text-gray-900">Hạng mục</th>
               <th className="border-b border-gray-200 px-4 py-3 text-left font-bold text-gray-900">Giá tham khảo</th>
             </tr>
           </thead>
           <tbody>
-            {products.map((product, index) => (
-              <tr key={product.slug} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50/60'}>
+            {pricings.map((pricing, index) => (
+              <tr key={pricing.slug} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50/60'}>
                 <td className="border-r border-t border-gray-200 px-4 py-3 text-gray-700">{category.title}</td>
-                <td className="border-r border-t border-gray-200 px-4 py-3 text-gray-700">Theo cấu hình</td>
-                <td className="border-r border-t border-gray-200 px-4 py-3 font-medium text-gray-900">{product.title}</td>
-                <td className="border-t border-gray-200 px-4 py-3 font-bold text-sky-600">{normalizePrice(product.price)}</td>
+                <td className="border-r border-t border-gray-200 px-4 py-3 text-gray-700">{pricing.description || 'Theo cấu hình'}</td>
+                <td className="border-r border-t border-gray-200 px-4 py-3 font-medium text-gray-900">{pricing.title}</td>
+                <td className="border-t border-gray-200 px-4 py-3 font-bold text-sky-600">{normalizePrice(pricing.price)}</td>
               </tr>
             ))}
           </tbody>
@@ -66,6 +66,7 @@ function CategoryPriceTable({
 export default function CategoryPage() {
   const { slug } = useParams();
   const [products, setProducts] = useState<Product[]>([]);
+  const [pricings, setPricings] = useState<PricingType[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -73,12 +74,14 @@ export default function CategoryPage() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [productsData, categoriesData] = await Promise.all([
+        const [productsData, categoriesData, pricingsData] = await Promise.all([
           getProducts(),
-          getCategories()
+          getCategories(),
+          getPricing()
         ]);
         if (productsData) setProducts(productsData);
         if (categoriesData) setCategories(categoriesData);
+        if (pricingsData) setPricings(pricingsData);
       } catch (err) {
         console.error("Error fetching data:", err);
       }
@@ -88,6 +91,7 @@ export default function CategoryPage() {
   }, []);
 
   const filteredProducts = products.filter(p => p.categorySlug === slug);
+  const filteredPricings = pricings.filter(p => p.categorySlug === slug);
   const category = categories.find(c => c.slug === slug);
 
   useEffect(() => {
@@ -131,7 +135,7 @@ export default function CategoryPage() {
           </p>
         </div>
 
-        <CategoryPriceTable category={category} products={filteredProducts} />
+        <CategoryPriceTable category={category} pricings={filteredPricings} />
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
           {filteredProducts.map((product, index) => (
@@ -151,7 +155,7 @@ export default function CategoryPage() {
                     referrerPolicy="no-referrer"
                   />
                   <div className="absolute top-3 right-3 bg-gradient-to-r from-sky-500 to-blue-600 px-3 py-1 rounded-full text-xs font-bold text-white shadow-sm">
-                    Giá: Liên hệ
+                    {product.price || "Giá: Liên hệ"}
                   </div>
                 </div>
                 <div className="p-4">

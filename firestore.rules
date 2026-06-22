@@ -18,7 +18,7 @@ service cloud.firestore {
         exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
         userEmail() in [
           'thaixalem367@gmail.com',
-          'nguyenxuanthai1609@gmail.com'
+          'adminvanbay@gmail.com'
         ]
       );
     }
@@ -122,6 +122,40 @@ service cloud.firestore {
         );
     }
 
+    function isValidPricing(data) {
+      return data.keys().hasAll([
+          'slug',
+          'title',
+          'category',
+          'categorySlug',
+          'price',
+          'ownerId'
+        ])
+        && data.keys().size() >= 6
+        && data.keys().size() <= 12
+
+        && hasValidString(data, 'slug', 100)
+        && hasValidString(data, 'title', 200)
+        && hasValidString(data, 'category', 100)
+        && hasValidString(data, 'categorySlug', 100)
+        && hasValidString(data, 'price', 100)
+
+        && data.ownerId is string
+        && data.ownerId.size() > 0
+        && (
+          data.ownerId == request.auth.uid ||
+          isAdmin()
+        )
+
+        && (
+          !data.keys().hasAny(['description']) ||
+          (
+            data.description is string &&
+            data.description.size() <= 3000
+          )
+        );
+    }
+
     match /products/{productId} {
       allow read: if true;
 
@@ -140,7 +174,10 @@ service cloud.firestore {
         );
 
       allow delete: if isSignedIn()
-        && isAdmin();
+        && (
+          isAdmin() ||
+          isProductOwner()
+        );
     }
 
     match /categories/{categoryId} {
@@ -157,7 +194,35 @@ service cloud.firestore {
         );
 
       allow delete: if isSignedIn()
-        && isAdmin();
+        || isAdmin();
+    }
+
+    match /pricing/{pricingId} {
+      allow read: if true;
+
+      allow create: if isSignedIn()
+        && isValidId(pricingId)
+        && isValidPricing(incoming());
+
+      allow update: if isSignedIn()
+        && (
+          isAdmin() ||
+          (
+            existing().ownerId is string
+            && existing().ownerId == request.auth.uid
+            && incoming().ownerId == existing().ownerId
+            && isValidPricing(incoming())
+          )
+        );
+
+      allow delete: if isSignedIn()
+        && (
+          isAdmin() ||
+          (
+            existing().ownerId is string
+            && existing().ownerId == request.auth.uid
+          )
+        );
     }
 
     match /admins/{adminId} {

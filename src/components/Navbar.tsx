@@ -1,6 +1,6 @@
 import { motion } from 'motion/react';
 import { Menu, X, Phone } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 export default function Navbar() {
@@ -12,19 +12,58 @@ export default function Navbar() {
     { name: 'Trang chủ', href: isHome ? '#home' : '/' },
     { name: 'Dịch vụ', href: isHome ? '#services' : '/#services' },
     { name: 'Sản phẩm', href: isHome ? '#products' : '/#products' },
-    { name: 'Báo giá', href: '/bao-gia' },
+    { name: 'Báo giá', href: isHome ? '#bao-gia' : '/#bao-gia' },
     { name: 'Liên hệ', href: isHome ? '#contact' : '/#contact' },
   ];
 
-  const handleLinkClick = (href: string) => {
+  const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     setIsOpen(false);
     if (href.startsWith('#')) {
-      const element = document.querySelector(href);
+      e.preventDefault();
+      
+      let targetId = href;
+      if (href === '#services') {
+        targetId = '#dich-vu';
+      } else if (href === '#contact') {
+        targetId = '#lien-he';
+      } else if (href === '#home') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        window.history.pushState(null, '', '/');
+        return;
+      }
+
+      const element = document.querySelector(targetId);
       if (element) {
-        element.scrollIntoView({ behavior: 'smooth' });
+        const yOffset = -80;
+        const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+        window.scrollTo({ top: y, behavior: 'smooth' });
+        window.history.pushState(null, '', href);
       }
     }
   };
+
+  useEffect(() => {
+    if (isHome && location.hash) {
+      const hash = location.hash;
+      let targetId = hash;
+      if (hash === '#services') {
+        targetId = '#dich-vu';
+      } else if (hash === '#contact') {
+        targetId = '#lien-he';
+      }
+
+      const timer = setTimeout(() => {
+        const element = document.querySelector(targetId);
+        if (element) {
+          const yOffset = -80;
+          const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+          window.scrollTo({ top: y, behavior: 'smooth' });
+        }
+      }, 150);
+
+      return () => clearTimeout(timer);
+    }
+  }, [isHome, location.hash, location.pathname]);
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
@@ -53,7 +92,7 @@ export default function Navbar() {
                 <a 
                   key={link.name}
                   href={link.href} 
-                  onClick={() => handleLinkClick(link.href)}
+                  onClick={(e) => handleLinkClick(e, link.href)}
                   className="text-sm font-medium text-gray-600 hover:text-black transition-colors"
                 >
                   {link.name}
@@ -98,7 +137,7 @@ export default function Navbar() {
                <a 
                  key={link.name}
                  href={link.href} 
-                 onClick={() => handleLinkClick(link.href)}
+                 onClick={(e) => handleLinkClick(e, link.href)}
                  className="block text-base font-medium text-gray-600"
                >
                  {link.name}

@@ -13,6 +13,17 @@ export interface Product {
   createdAt?: number;
 }
 
+export interface Pricing {
+  slug: string;
+  title: string;
+  category: string;
+  categorySlug: string;
+  price: string;
+  description?: string;
+  createdBy?: string;
+  createdAt?: number;
+}
+
 export interface Category {
   slug: string;
   title: string;

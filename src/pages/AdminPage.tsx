@@ -18,8 +18,12 @@ import {
   getCategories,
   updateCategory,
   deleteCategory,
+  getPricing,
+  addPricing,
+  updatePricing,
+  deletePricing
 } from "../services/productService";
-import { Product, Category } from "../types";
+import { Product, Category, Pricing } from "../types";
 import { motion } from "motion/react";
 import {
   Plus,
@@ -63,13 +67,8 @@ export default function AdminPage() {
   const [categories, setCategories] = useState<(Category & { id: string })[]>(
     [],
   );
+  const [pricings, setPricings] = useState<(Pricing & { id: string })[]>([]);
   const [loading, setLoading] = useState(true);
-  const [priceDrafts, setPriceDrafts] = useState<Record<string, string>>({});
-  const [savingPriceId, setSavingPriceId] = useState<string | null>(null);
-  const [editingProduct, setEditingProduct] = useState<
-    (Product & { id: string }) | null
-  >(null);
-  const [isAdding, setIsAdding] = useState(false);
 
   // Auth state
   const [loginMethod, setLoginMethod] = useState<"google" | "email">("google");
@@ -77,16 +76,49 @@ export default function AdminPage() {
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState("");
 
-  // Category Form state
+  const [editingProduct, setEditingProduct] = useState<
+    (Product & { id: string }) | null
+  >(null);
+  const [isAdding, setIsAdding] = useState(false);
+
   const [editingCategory, setEditingCategory] = useState<
     (Category & { id: string }) | null
   >(null);
   const [isAddingCategory, setIsAddingCategory] = useState(false);
+
+  const [editingPricing, setEditingPricing] = useState<(Pricing & { id: string }) | null>(null);
+  const [isAddingPricing, setIsAddingPricing] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{
+    id: string;
+    type: "product" | "category" | "pricing";
+    title: string;
+  } | null>(null);
+  const [statusMessage, setStatusMessage] = useState<{ text: string; isError: boolean } | null>(null);
+
+  // Auto-dismiss status message after 4 seconds
+  useEffect(() => {
+    if (statusMessage) {
+      const timer = setTimeout(() => {
+        setStatusMessage(null);
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [statusMessage]);
+
   const [categoryFormData, setCategoryFormData] = useState<Partial<Category>>({
     title: "",
     slug: "",
     description: "",
     image: "",
+  });
+
+  const [pricingFormData, setPricingFormData] = useState<Partial<Pricing>>({
+    title: "",
+    slug: "",
+    category: "",
+    categorySlug: "",
+    price: "",
+    description: "",
   });
 
   // Form state
@@ -163,29 +195,21 @@ export default function AdminPage() {
     // Always fetch products on mount for testing
     fetchProducts();
     fetchCategoriesData();
+    fetchPricingData();
     return () => unsubscribe();
   }, []);
 
-  useEffect(() => {
-    setPriceDrafts(
-      products.reduce<Record<string, string>>((drafts, product) => {
-        drafts[product.id] = product.price || "";
-        return drafts;
-      }, {}),
-    );
-  }, [products]);
-
-  const productsByCategory = useMemo(
+  const pricingsByCategory = useMemo(
     () =>
       categories
         .map((category) => ({
           category,
-          products: products.filter(
-            (product) => product.categorySlug === category.slug,
+          items: pricings.filter(
+            (item) => item.categorySlug === category.slug,
           ),
         }))
-        .filter(({ products }) => products.length > 0),
-    [categories, products],
+        .filter(({ items }) => items.length > 0),
+    [categories, pricings],
   );
 
   const fetchCategoriesData = async () => {
@@ -200,37 +224,79 @@ export default function AdminPage() {
     setLoading(false);
   };
 
-  const handlePriceChange = (productId: string, price: string) => {
-    setPriceDrafts((prev) => ({
-      ...prev,
-      [productId]: price,
-    }));
+  const fetchPricingData = async () => {
+    const data = await getPricing();
+    setPricings(data);
   };
 
-  const handlePriceSave = async (product: Product & { id: string }) => {
-    if (!user) {
-      alert("Bạn chưa đăng nhập. Vui lòng tải lại trang và đăng nhập.");
-      return;
-    }
-
-    const nextPrice = (priceDrafts[product.id] || "").trim();
-    if (!nextPrice) {
-      alert("Vui lòng nhập giá báo giá.");
-      return;
-    }
+  const handlePricingSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
 
     try {
-      setSavingPriceId(product.id);
-      await updateProduct(product.id, {
-        ...product,
-        price: nextPrice,
+      if (editingPricing) {
+        await updatePricing(editingPricing.id, pricingFormData);
+      } else {
+        await addPricing(pricingFormData as Pricing);
+      }
+      setEditingPricing(null);
+      setIsAddingPricing(false);
+      setPricingFormData({
+        title: "",
+        slug: "",
+        category: "",
+        categorySlug: "",
+        price: "",
+        description: "",
       });
-      await fetchProducts();
+      fetchPricingData();
     } catch (error) {
-      console.error("Update price error:", error);
-      alert("Có lỗi xảy ra khi cập nhật báo giá.");
+      console.error("Lỗi khi lưu báo giá:", error);
+    }
+  };
+
+  const handlePricingEdit = (pricing: Pricing & { id: string }) => {
+    setEditingPricing(pricing);
+    setPricingFormData(pricing);
+    setIsAddingPricing(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handlePricingDelete = (id: string, title: string) => {
+    setDeleteTarget({
+      id,
+      type: "pricing",
+      title,
+    });
+  };
+
+  const executeDelete = async () => {
+    if (!deleteTarget) return;
+    const { id, type } = deleteTarget;
+    setDeleteTarget(null);
+    setLoading(true);
+    try {
+      if (type === "pricing") {
+        await deletePricing(id);
+        await fetchPricingData();
+        setStatusMessage({ text: "Đã xóa bản báo giá thành công!", isError: false });
+      } else if (type === "category") {
+        await deleteCategory(id);
+        await fetchCategoriesData();
+        setStatusMessage({ text: "Đã xóa danh mục thành công!", isError: false });
+      } else if (type === "product") {
+        await deleteProduct(id);
+        await fetchProducts();
+        setStatusMessage({ text: "Đã xóa sản phẩm thành công!", isError: false });
+      }
+    } catch (error: any) {
+      console.error(`Error deleting ${type}:`, error);
+      setStatusMessage({ 
+        text: `Lỗi khi xóa: Bạn không có đủ quyền hạn hoặc lỗi mạng.`, 
+        isError: true 
+      });
     } finally {
-      setSavingPriceId(null);
+      setLoading(false);
     }
   };
 
@@ -287,13 +353,86 @@ export default function AdminPage() {
     setProducts([]);
   };
 
+  const seedPricingData = async () => {
+    if (!user) {
+      setStatusMessage({ text: "Vui lòng đăng nhập trước khi thực hiện", isError: true });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Create categories
+      const categoriesToAdd = [
+        { title: "Kính cường lực", slug: "kinh-cuong-luc", description: "Bảng giá kính nguyên tấm, chưa gồm công lắp đặt", image: "https://images.unsplash.com/photo-1509391366360-1e97f52cefd3?auto=format&fit=crop&w=800&q=80" },
+        { title: "Cửa kính cường lực", slug: "cua-kinh-cuong-luc", description: "Cửa kính cường lực trọn bộ (kính 10mm, đã gồm thi công)", image: "https://images.unsplash.com/photo-1518386377-5056715f5d88?auto=format&fit=crop&w=800&q=80" },
+        { title: "Phòng tắm kính", slug: "phong-tam-kinh", description: "Phòng tắm kính (trọn bộ, đã gồm phụ kiện inox/bản lề kính)", image: "https://plus.unsplash.com/premium_photo-1661877303180-19a028c21048?auto=format&fit=crop&w=800&q=80" },
+      ];
+
+      for (const cat of categoriesToAdd) {
+        if (!categories.find(c => c.slug === cat.slug)) {
+          await addCategory(cat);
+        }
+      }
+
+      // Create products
+      const productsToAdd = [
+        // Kính cường lực
+        { title: "Kính cường lực 5mm", slug: "kinh-cuong-luc-5mm", category: "Kính cường lực", categorySlug: "kinh-cuong-luc", price: "Khoảng 230.000đ/m²", description: "Giá kính nguyên tấm, chưa gồm công lắp đặt", image: "https://images.unsplash.com/photo-1509391366360-1e97f52cefd3?auto=format&fit=crop&w=800&q=80" },
+        { title: "Kính cường lực 6mm", slug: "kinh-cuong-luc-6mm", category: "Kính cường lực", categorySlug: "kinh-cuong-luc", price: "Khoảng 260.000đ/m²", description: "Giá kính nguyên tấm, chưa gồm công lắp đặt", image: "https://images.unsplash.com/photo-1509391366360-1e97f52cefd3?auto=format&fit=crop&w=800&q=80" },
+        { title: "Kính cường lực 8mm (dùng cho phòng tắm)", slug: "kinh-cuong-luc-8mm", category: "Kính cường lực", categorySlug: "kinh-cuong-luc", price: "Khoảng 450.000đ/m²", description: "Giá kính nguyên tấm, chưa gồm công lắp đặt", image: "https://images.unsplash.com/photo-1509391366360-1e97f52cefd3?auto=format&fit=crop&w=800&q=80" },
+        { title: "Kính cường lực 10mm", slug: "kinh-cuong-luc-10mm", category: "Kính cường lực", categorySlug: "kinh-cuong-luc", price: "500.000đ - 850.000đ/m²", description: "500.000đ cho phòng tắm, nếu tính cả gia công ứng dụng khác dao động 650.000–850.000đ/m²", image: "https://images.unsplash.com/photo-1509391366360-1e97f52cefd3?auto=format&fit=crop&w=800&q=80" },
+        { title: "Kính cường lực cao cấp (văn phòng, mặt dựng)", slug: "kinh-cuong-luc-cao-cap", category: "Kính cường lực", categorySlug: "kinh-cuong-luc", price: "2.200.000đ - 3.800.000đ/m²", description: "Giá kính nguyên tấm, chưa gồm công lắp đặt", image: "https://images.unsplash.com/photo-1509391366360-1e97f52cefd3?auto=format&fit=crop&w=800&q=80" },
+
+        // Cửa kính cường lực
+        { title: "Cửa kính cường lực 1 cánh mở quay", slug: "cua-1-canh-mo-quay", category: "Cửa kính cường lực", categorySlug: "cua-kinh-cuong-luc", price: "Khoảng 750.000đ/m²", description: "Cửa kính cường lực trọn bộ (kính 10mm, đã gồm thi công)", image: "https://images.unsplash.com/photo-1518386377-5056715f5d88?auto=format&fit=crop&w=800&q=80" },
+        { title: "Cửa kính cường lực 2 cánh mở quay", slug: "cua-2-canh-mo-quay", category: "Cửa kính cường lực", categorySlug: "cua-kinh-cuong-luc", price: "Khoảng 770.000đ/m²", description: "Cửa kính cường lực trọn bộ (kính 10mm, đã gồm thi công)", image: "https://images.unsplash.com/photo-1518386377-5056715f5d88?auto=format&fit=crop&w=800&q=80" },
+        { title: "Cửa kính cường lực 1 cánh mở lùa", slug: "cua-1-canh-mo-lua", category: "Cửa kính cường lực", categorySlug: "cua-kinh-cuong-luc", price: "Khoảng 740.000đ/m²", description: "Cửa kính cường lực trọn bộ (kính 10mm, đã gồm thi công)", image: "https://images.unsplash.com/photo-1518386377-5056715f5d88?auto=format&fit=crop&w=800&q=80" },
+        { title: "Cửa kính cường lực 2 cánh mở lùa", slug: "cua-2-canh-mo-lua", category: "Cửa kính cường lực", categorySlug: "cua-kinh-cuong-luc", price: "760.000đ - 1.050.000đ/m²", description: "Tùy đơn vị thi công và phụ kiện đi kèm. Trọn bộ kính 10mm, đã gồm thi công.", image: "https://images.unsplash.com/photo-1518386377-5056715f5d88?auto=format&fit=crop&w=800&q=80" },
+
+        // Phòng tắm kính
+        { title: "Vách phẳng 2 tấm", slug: "vach-phang-2-tam", category: "Phòng tắm kính", categorySlug: "phong-tam-kinh", price: "2.000.000đ - 2.500.000đ/bộ", description: "Trọn bộ, đã gồm phụ kiện inox/bản lề kính", image: "https://plus.unsplash.com/premium_photo-1661877303180-19a028c21048?auto=format&fit=crop&w=800&q=80" },
+        { title: "Vách 3 tấm thẳng", slug: "vach-3-tam-thang", category: "Phòng tắm kính", categorySlug: "phong-tam-kinh", price: "2.200.000đ - 2.600.000đ/bộ", description: "Trọn bộ, đã gồm phụ kiện inox/bản lề kính", image: "https://plus.unsplash.com/premium_photo-1661877303180-19a028c21048?auto=format&fit=crop&w=800&q=80" },
+        { title: "Vách góc 90 độ", slug: "vach-goc-90-do", category: "Phòng tắm kính", categorySlug: "phong-tam-kinh", price: "Khoảng 2.500.000đ/bộ", description: "3 vách vuông góc. Trọn bộ, đã gồm phụ kiện inox/bản lề kính", image: "https://plus.unsplash.com/premium_photo-1661877303180-19a028c21048?auto=format&fit=crop&w=800&q=80" },
+        { title: "Vách góc 135 độ", slug: "vach-goc-135-do", category: "Phòng tắm kính", categorySlug: "phong-tam-kinh", price: "Khoảng 2.500.000đ/bộ", description: "Trọn bộ, đã gồm phụ kiện inox/bản lề kính", image: "https://plus.unsplash.com/premium_photo-1661877303180-19a028c21048?auto=format&fit=crop&w=800&q=80" },
+        { title: "Cửa lùa ray nhôm", slug: "cua-lua-ray-nhom", category: "Phòng tắm kính", categorySlug: "phong-tam-kinh", price: "Khoảng 1.700.000đ/bộ", description: "Trọn bộ, đã gồm phụ kiện inox/bản lề kính", image: "https://plus.unsplash.com/premium_photo-1661877303180-19a028c21048?auto=format&fit=crop&w=800&q=80" },
+      ];
+
+      // Create pricing data as well
+      const pricingsToAdd = productsToAdd.map(({ title, slug, category, categorySlug, price, description }) => ({
+        title, slug, category, categorySlug, price, description
+      }));
+
+      for (const prod of productsToAdd) {
+        if (!products.find(p => p.slug === prod.slug)) {
+          await addProduct(prod);
+        }
+      }
+
+      for (const priceItem of pricingsToAdd) {
+        if (!pricings.find(p => p.slug === priceItem.slug)) {
+          await addPricing(priceItem);
+        }
+      }
+
+      await fetchCategoriesData();
+      await fetchProducts();
+      await fetchPricingData();
+      setStatusMessage({ text: "Đã thêm dữ liệu báo giá mẫu thành công!", isError: false });
+    } catch (error) {
+      console.error(error);
+      setStatusMessage({ text: "Có lỗi xảy ra khi thêm dữ liệu mẫu", isError: true });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     // Check size limit (e.g., 5MB) before processing
     if (file.size > 5 * 1024 * 1024) {
-      alert("Ảnh quá lớn. Vui lòng chọn ảnh dưới 5MB.");
+      setStatusMessage({ text: "Ảnh quá lớn. Vui lòng chọn ảnh dưới 5MB.", isError: true });
       return;
     }
 
@@ -342,7 +481,7 @@ export default function AdminPage() {
     if (!file) return;
 
     if (file.size > 5 * 1024 * 1024) {
-      alert("Ảnh quá lớn. Vui lòng chọn ảnh dưới 5MB.");
+      setStatusMessage({ text: "Ảnh quá lớn. Vui lòng chọn ảnh dưới 5MB.", isError: true });
       return;
     }
 
@@ -386,10 +525,7 @@ export default function AdminPage() {
 
   const handleCategorySubmit = async (e: any) => {
     e.preventDefault();
-    if (!user) {
-      alert("Bạn chưa đăng nhập. Vui lòng tải lại trang và đăng nhập.");
-      return;
-    }
+    if (!user) return;
 
     try {
       if (editingCategory) {
@@ -403,11 +539,10 @@ export default function AdminPage() {
         title: "",
         slug: "",
         description: "",
-        image: "",
       });
       fetchCategoriesData();
     } catch (error) {
-      alert("Có lỗi xảy ra. Vui lòng kiểm tra quyền hạn.");
+      console.error("Lỗi khi lưu danh mục:", error);
     }
   };
 
@@ -418,35 +553,17 @@ export default function AdminPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleCategoryDelete = async (id: string) => {
-    if (window.confirm("Bạn có chắc muốn xóa danh mục này?")) {
-      try {
-        setLoading(true);
-        await deleteCategory(id);
-        await fetchCategoriesData();
-      } catch (error: any) {
-        console.error("Delete category error:", error);
-        if (error.message?.includes("Permission denied")) {
-          alert(
-            "Bạn không có quyền xóa danh mục này. Chỉ quản trị viên mới có thể xóa.",
-          );
-        } else {
-          alert(
-            "Lỗi khi xóa danh mục. Vui lòng kiểm tra quyền hạn hoặc thử lại.",
-          );
-        }
-      } finally {
-        setLoading(false);
-      }
-    }
+  const handleCategoryDelete = (id: string, title: string) => {
+    setDeleteTarget({
+      id,
+      type: "category",
+      title,
+    });
   };
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
-    if (!user) {
-      alert("Bạn chưa đăng nhập. Vui lòng tải lại trang và đăng nhập.");
-      return;
-    }
+    if (!user) return;
 
     try {
       if (editingProduct) {
@@ -456,18 +573,18 @@ export default function AdminPage() {
       }
       setEditingProduct(null);
       setIsAdding(false);
+      setIsAddingPricing(false);
       setFormData({
         title: "",
         slug: "",
         category: "",
         categorySlug: "",
-        image: "",
         price: "Giá: Liên hệ",
         description: "",
       });
       fetchProducts();
     } catch (error) {
-      alert("Có lỗi xảy ra. Vui lòng kiểm tra quyền hạn.");
+      console.error("Lỗi khi lưu:", error);
     }
   };
 
@@ -478,27 +595,12 @@ export default function AdminPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm("Bạn có chắc muốn xóa sản phẩm này?")) {
-      try {
-        setLoading(true);
-        await deleteProduct(id);
-        await fetchProducts();
-      } catch (error: any) {
-        console.error("Delete product error:", error);
-        if (error.message?.includes("Permission denied")) {
-          alert(
-            "Bạn không có quyền xóa sản phẩm này. Chỉ quản trị viên mới có thể xóa.",
-          );
-        } else {
-          alert(
-            "Lỗi khi xóa sản phẩm. Vui lòng kiểm tra quyền hạn hoặc thử lại.",
-          );
-        }
-      } finally {
-        setLoading(false);
-      }
-    }
+  const handleDelete = (id: string, title: string) => {
+    setDeleteTarget({
+      id,
+      type: "product",
+      title,
+    });
   };
 
   if (loading) {
@@ -620,6 +722,57 @@ export default function AdminPage() {
 
   return (
     <div className="pt-24 pb-16 bg-gray-50 min-h-screen">
+      {/* Custom Status Toast */}
+      {statusMessage && (
+        <div className={`fixed top-24 right-6 z-[110] p-4 rounded-2xl shadow-xl border backdrop-blur-md flex items-center gap-3 transition-all duration-300 ${statusMessage.isError ? "bg-red-50 text-red-700 border-red-200" : "bg-emerald-50 text-emerald-800 border-emerald-200"}`}>
+          <span className="text-sm font-bold">{statusMessage.text}</span>
+          <button onClick={() => setStatusMessage(null)} className="p-1 hover:bg-black/5 rounded">
+            <X size={16} />
+          </button>
+        </div>
+      )}
+
+      {/* Beautiful Modular Deletion Confirmation Overlay */}
+      {deleteTarget && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            onClick={() => setDeleteTarget(null)}
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            className="relative bg-white w-full max-w-md p-6 rounded-3xl shadow-2xl border border-gray-100 z-10 text-center"
+          >
+            <div className="w-14 h-14 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-red-100">
+              <Trash2 size={24} />
+            </div>
+            <h3 className="text-lg font-bold text-gray-900 mb-2">
+              Xác nhận xóa {deleteTarget.type === "pricing" ? "bản báo giá" : deleteTarget.type === "category" ? "danh mục" : "sản phẩm"}
+            </h3>
+            <p className="text-sm text-gray-500 mb-6 font-medium leading-relaxed">
+              Bạn có chắc chắn muốn xóa bản ghi <span className="text-gray-900 font-extrabold">"{deleteTarget.title}"</span>? Hành động này không thể phục hồi.
+            </p>
+            <div className="flex gap-3 justify-center">
+              <button
+                onClick={() => setDeleteTarget(null)}
+                className="px-5 py-2.5 bg-gray-100 text-gray-700 font-bold rounded-xl text-sm hover:bg-gray-200 transition-all"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                onClick={executeDelete}
+                className="px-5 py-2.5 bg-red-600 text-white font-bold rounded-xl text-sm hover:bg-red-700 transition-all shadow-lg shadow-red-500/20"
+              >
+                Xác nhận xóa
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
           <div>
@@ -866,6 +1019,22 @@ export default function AdminPage() {
                           </div>
                         </div>
                       </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2.5">
+                          Giá tham khảo
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={formData.price || ""}
+                          onChange={(e) =>
+                            setFormData({ ...formData, price: e.target.value })
+                          }
+                          placeholder="VD: 750.000đ/m²"
+                          className="w-full bg-gray-50 border border-gray-100 rounded-xl px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all shadow-sm"
+                        />
+                      </div>
                       
                       <div>
                         <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2.5">
@@ -926,6 +1095,9 @@ export default function AdminPage() {
                         Tên & Danh mục
                       </th>
                       <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                        Số tiền
+                      </th>
+                      <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">
                         Tạo bởi
                       </th>
                       <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-right">
@@ -954,6 +1126,9 @@ export default function AdminPage() {
                             {product.category}
                           </p>
                         </td>
+                        <td className="px-6 py-4 text-sm text-gray-900 font-medium">
+                          {product.price}
+                        </td>
                         <td className="px-6 py-4 text-sm text-gray-600">
                           <span className="text-[10px] text-gray-500">
                             {product.createdBy || "N/A"}
@@ -968,7 +1143,7 @@ export default function AdminPage() {
                               <Edit2 size={18} />
                             </button>
                             <button
-                              onClick={() => handleDelete(product.id)}
+                              onClick={() => handleDelete(product.id, product.title)}
                               className="p-2 text-gray-400 hover:text-red-600 transition-colors"
                             >
                               <Trash2 size={18} />
@@ -1004,17 +1179,150 @@ export default function AdminPage() {
                     Cập nhật giá tham khảo cho từng sản phẩm. Dữ liệu này hiển thị trên trang Báo giá và trang danh mục.
                   </p>
                 </div>
-                <Link
-                  to="/bao-gia"
-                  className="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-sky-50 text-sky-600 font-bold text-sm hover:bg-sky-100 transition-all"
-                >
-                  Xem trang báo giá
-                </Link>
+                <div className="flex flex-wrap items-center gap-3">
+                  <button
+                    onClick={() => {
+                      setIsAddingPricing(true);
+                      setPricingFormData({
+                        title: "",
+                        slug: "",
+                        category: "",
+                        categorySlug: "",
+                        price: "Giá: Liên hệ",
+                        description: "",
+                      });
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-blue-600 text-white font-bold text-sm hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20"
+                  >
+                    <Plus size={18} className="mr-2" /> Thêm báo giá
+                  </button>
+                </div>
               </div>
             </div>
 
-            {productsByCategory.length > 0 ? (
-              productsByCategory.map(({ category, products }) => (
+            {isAddingPricing && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  onClick={() => setIsAddingPricing(false)}
+                  className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                />
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  className="relative bg-white w-full max-w-2xl p-8 rounded-3xl shadow-2xl border border-gray-100"
+                >
+                  <button 
+                    onClick={() => setIsAddingPricing(false)}
+                    className="absolute top-6 right-6 p-2 text-gray-400 hover:text-black transition-colors"
+                  >
+                    <X size={24} />
+                  </button>
+                  <h2 className="text-2xl font-bold mb-8 pr-12 border-b pb-4">
+                    {editingPricing ? "Cập nhật báo giá" : "Thêm báo giá mới"}
+                  </h2>
+                  <form onSubmit={handlePricingSubmit} className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2.5">
+                          Tên Hạng Mục / Sản Phẩm
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={pricingFormData.title}
+                          onChange={(e) => {
+                            const newTitle = e.target.value;
+                            setPricingFormData({
+                              ...pricingFormData,
+                              title: newTitle,
+                              slug: generateSlug(newTitle),
+                            });
+                          }}
+                          placeholder="VD: Cửa lùa 2 cánh..."
+                          className="w-full bg-gray-50 border border-gray-100 rounded-xl px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition-all"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2.5">
+                          Danh mục ({categories.length})
+                        </label>
+                        <select
+                          required
+                          value={pricingFormData.categorySlug || ""}
+                          onChange={(e) => {
+                            const catSlug = e.target.value;
+                            const cat = categories.find((c) => c.slug === catSlug);
+                            setPricingFormData({
+                              ...pricingFormData,
+                              categorySlug: catSlug,
+                              category: cat ? cat.title : "",
+                            });
+                          }}
+                          className="w-full bg-gray-50 border border-gray-100 rounded-xl px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition-all appearance-none"
+                        >
+                          <option value="" disabled>--- Chọn danh mục ---</option>
+                          {categories.map((cat) => (
+                            <option key={cat.slug} value={cat.slug}>
+                              {cat.title}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2.5">
+                        Giá tham khảo
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={pricingFormData.price}
+                        onChange={(e) =>
+                          setPricingFormData({ ...pricingFormData, price: e.target.value })
+                        }
+                        placeholder="VD: 750.000đ/m²"
+                        className="w-full bg-gray-50 border border-gray-100 rounded-xl px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2.5">
+                        Mô tả (không bắt buộc)
+                      </label>
+                      <textarea
+                        rows={3}
+                        value={pricingFormData.description}
+                        onChange={(e) =>
+                          setPricingFormData({ ...pricingFormData, description: e.target.value })
+                        }
+                        placeholder="Có thể để trống. VD: Kính cường lực 10mm"
+                        className="w-full bg-gray-50 border border-gray-100 rounded-xl px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition-all"
+                      ></textarea>
+                    </div>
+                    <div className="flex justify-end gap-4 mt-4 border-t pt-8">
+                      <button
+                        type="button"
+                        onClick={() => setIsAddingPricing(false)}
+                        className="px-8 py-3 rounded-xl font-bold text-sm bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all"
+                      >
+                        Hủy bỏ
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-8 py-3 rounded-xl font-bold text-sm bg-black text-white hover:bg-gray-800 transition-all flex items-center gap-2 shadow-xl shadow-black/10"
+                      >
+                        <Save size={18} /> Lưu báo giá
+                      </button>
+                    </div>
+                  </form>
+                </motion.div>
+              </div>
+            )}
+
+            {pricingsByCategory.length > 0 ? (
+              pricingsByCategory.map(({ category, items }) => (
                 <div
                   key={category.slug}
                   className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden"
@@ -1039,42 +1347,37 @@ export default function AdminPage() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-50">
-                        {products.map((product) => (
+                        {items.map((pricing) => (
                           <tr
-                            key={product.id}
+                            key={pricing.id}
                             className="hover:bg-gray-50/50 transition-colors"
                           >
                             <td className="px-6 py-4">
                               <p className="text-sm font-bold text-gray-900">
-                                {product.title}
+                                {pricing.title}
                               </p>
                               <p className="text-[10px] text-gray-400">
-                                {product.slug}
+                                {pricing.slug}
                               </p>
                             </td>
-                            <td className="px-6 py-4 min-w-[260px]">
-                              <input
-                                type="text"
-                                value={priceDrafts[product.id] ?? product.price ?? ""}
-                                onChange={(e) =>
-                                  handlePriceChange(product.id, e.target.value)
-                                }
-                                placeholder="VD: 3.000.000 - 3.300.000 đ/m2"
-                                className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition-all shadow-sm"
-                              />
+                            <td className="px-6 py-4">
+                              <span className="text-sm font-bold text-sky-600">{pricing.price}</span>
                             </td>
                             <td className="px-6 py-4 text-right">
-                              <button
-                                onClick={() => handlePriceSave(product)}
-                                disabled={
-                                  savingPriceId === product.id ||
-                                  (priceDrafts[product.id] ?? product.price ?? "") === product.price
-                                }
-                                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-black text-white font-bold text-sm hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                              >
-                                <Save size={16} />
-                                {savingPriceId === product.id ? "Đang lưu" : "Lưu"}
-                              </button>
+                              <div className="flex justify-end gap-2">
+                                <button
+                                  onClick={() => handlePricingEdit(pricing)}
+                                  className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
+                                >
+                                  <Edit2 size={18} />
+                                </button>
+                                <button
+                                  onClick={() => handlePricingDelete(pricing.id, pricing.title)}
+                                  className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                                >
+                                  <Trash2 size={18} />
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         ))}
@@ -1085,7 +1388,7 @@ export default function AdminPage() {
               ))
             ) : (
               <div className="py-12 text-center text-gray-400 bg-white rounded-3xl border border-dashed border-gray-200">
-                <p className="text-sm">Chưa có sản phẩm để quản lý báo giá.</p>
+                <p className="text-sm">Chưa có dữ liệu báo giá để quản lý.</p>
               </div>
             )}
           </div>
@@ -1267,7 +1570,7 @@ export default function AdminPage() {
                               <Edit2 size={18} />
                             </button>
                             <button
-                              onClick={() => handleCategoryDelete(category.id)}
+                              onClick={() => handleCategoryDelete(category.id, category.title)}
                               className="p-2 text-gray-400 hover:text-red-600 transition-colors"
                             >
                               <Trash2 size={18} />

@@ -9,13 +9,13 @@ import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import Services from './components/Services';
 import Products from './components/Products';
+import Pricing from './components/Pricing';
 import Contact from './components/Contact';
 import Footer from './components/Footer';
 import FloatingContact from './components/FloatingContact';
 import ProductPage from './pages/ProductPage';
 import CategoryPage from './pages/CategoryPage';
 import AdminPage from './pages/AdminPage';
-import PricingPage from './pages/PricingPage';
 
 function HomePage() {
   const location = useLocation();
@@ -39,6 +39,7 @@ function HomePage() {
       <Hero />
       <Services />
       <Products />
+      <Pricing />
       <Contact />
     </>
   );
@@ -54,7 +55,6 @@ export default function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/san-pham/:slug" element={<ProductPage />} />
             <Route path="/danh-muc/:slug" element={<CategoryPage />} />
-            <Route path="/bao-gia" element={<PricingPage />} />
             <Route path="/admin" element={<AdminPage />} />
           </Routes>
         </main>

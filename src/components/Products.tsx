@@ -65,7 +65,7 @@ export default function Products() {
                     referrerPolicy="no-referrer"
                   />
                   <div className="absolute top-2 right-2 bg-gradient-to-r from-sky-500 to-blue-600 px-3 py-1 rounded-full text-xs font-bold text-white shadow-md">
-                    Giá: Liên hệ
+                    {product.price || "Giá: Liên hệ"}
                   </div>
                 </div>
                 <div className="p-4 bg-white">
